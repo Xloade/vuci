@@ -1,33 +1,29 @@
 <template>
   <div class="example">
-    <a-input-search :placeholder="$t('example.Please input text')" :enter-button="$t('example.Send')" size="large" @search="send"/>
-    <a-input v-model="resp"/>
+      <a-input v-model="time"></a-input>
+      <a-button type="primary"></a-button>
   </div>
 </template>
 
 <script>
 export default {
-  data () {
-    return {
-      resp: ''
+    data(){
+        return{
+            time:''
+        }
+    },
+    methods: {
+        get_time(){
+            this.$rpc.call('example', 'get_tume', {})
+            .then(r =>{
+                this.time = r.time
+            })
+        }
     }
-  },
-  methods: {
-    send (value) {
-      this.$rpc.call('example', 'echo', { text: value }).then(r => {
-        this.resp = r.text
-      })
-    }
-  }
+
 }
 </script>
 
 <style>
-.example {
-  width: 500px;
-}
 
-.example .ant-input-search {
-  margin-bottom: 20px;
-}
 </style>

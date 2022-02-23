@@ -3,8 +3,8 @@
         "title": "Examples",
         "index": 90
     },
-    "examples/example": {
-        "title": "Example",
+    "examples/first_example": {
+        "title": "first example",
         "view": "vuci-app-example",
         "index": 10
     }

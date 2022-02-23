@@ -1,7 +1,8 @@
 local M = {}
 
-function M.echo(params)
-    params.text = os.date('%Y-%m-%d %H:%M:%S') .. ": " .. params.text
+function M.get_time(params)
+    local time = os.date("%H:%M:%S")
+    params.time = time
     return params
 end
 
