@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import { session } from '@/plugins/session'
-import { rpc } from '@/plugins/rpc'
 import axios from 'axios'
 
 Vue.use(Router)
@@ -69,31 +68,12 @@ function beforeEach (to, next, alive) {
   }
 }
 
-function firstLogin () {
-  return new Promise(resolve => {
-    rpc.call('ui', 'first_login').then(r => {
-      resolve(r.first)
-    })
-  })
-}
-
 router.beforeEach((to, from, next) => {
-  firstLogin().then(first => {
-    if (first) {
-      if (to.path !== '/wizard') { next('/wizard') } else { next() }
-    } else {
-      if (to.path === '/wizard') {
-        next('/')
-        return
-      }
+  session.isAlive().then((alive) => {
+    if (alive) session.startHeartbeat()
+    else session.logout()
 
-      session.isAlive().then((alive) => {
-        if (alive) session.startHeartbeat()
-        else session.logout()
-
-        beforeEach(to, next, alive)
-      })
-    }
+    beforeEach(to, next, alive)
   })
 })
 

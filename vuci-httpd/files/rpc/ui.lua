@@ -130,7 +130,7 @@ function M.first_set(params)
 
     local c = uci.cursor()
 
-    c:set("vuci", "main", "lang", params.lang)
+    -- c:set("vuci", "main", "lang", params.lang)
     c:set("vuci", "main", "first_login", "0")
     c:commit("vuci")
 

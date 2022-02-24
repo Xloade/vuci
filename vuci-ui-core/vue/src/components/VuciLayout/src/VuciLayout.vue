@@ -17,16 +17,19 @@
         </div>
       </a-layout-content>
     </a-layout>
+    <force-change-password/>
   </a-layout>
 </template>
 <script>
 import VuciSide from './VuciSide.vue'
 import VuciHeader from './VuciHeader'
+import ForceChangePassword from './ForceChangePassword'
 
 export default {
   components: {
     VuciSide,
-    VuciHeader
+    VuciHeader,
+    ForceChangePassword
   },
   computed: {
     hostname () {
