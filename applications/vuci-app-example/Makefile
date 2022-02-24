@@ -1,7 +1,0 @@
-include $(TOPDIR)/rules.mk
-
-APP_TITLE:=Dainius
-
-include ../../vuci-app.mk
-
-# call BuildPackage - OpenWrt buildroot signature
