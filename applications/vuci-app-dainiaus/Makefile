@@ -1,6 +1,6 @@
 include $(TOPDIR)/rules.mk
 
-APP_TITLE:=Dainius
+APP_TITLE:=Dainiaus
 
 include ../../vuci-app.mk
 

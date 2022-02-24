@@ -6,19 +6,19 @@ module.exports = {
     devServer: {
         proxy: {
             '/rpc': {
-                target: 'http://localhost'
+                target: 'http://192.168.1.1'
             },
             '/views/': {
-                target: 'http://localhost'
+                target: 'http://192.168.1.1'
             },
             '/i18n/': {
-                target: 'http://localhost'
+                target: 'http://192.168.1.1'
             },
             '/upload': {
-                target: 'http://localhost'
+                target: 'http://192.168.1.1'
             },
             '/download': {
-                target: 'http://localhost'
+                target: 'http://192.168.1.1n'
             }
         }
     },

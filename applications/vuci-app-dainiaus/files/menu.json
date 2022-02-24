@@ -1,0 +1,11 @@
+{
+    "dainiaus": {
+        "title": "dainiaus(test)",
+        "index": 2000
+    },
+    "dainiaus/first_dainiaus": {
+        "title": "first dainius(test)",
+        "view": "vuci-app-dainiaus",
+        "index": 1000
+    }
+}
