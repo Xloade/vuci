@@ -7,17 +7,6 @@ Vue.use(Router)
 
 const router = new Router({
   routes: [{
-    path: '/wizard',
-    component: resolve => {
-      axios.get(`/views/vuci-app-wizard.js?_t=${new Date().getTime()}`).then(r => {
-        // eslint-disable-next-line no-eval
-        return resolve(eval(r.data))
-      }).catch(() => {
-        return resolve(require('@/views/Wizard.vue'))
-      })
-    }
-  },
-  {
     path: '/login',
     component: resolve => {
       axios.get(`/views/vuci-app-login.js?_t=${new Date().getTime()}`).then(r => {
