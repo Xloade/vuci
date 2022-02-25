@@ -2,11 +2,16 @@
   <div class="example">
     <div class="viewport" ref="viewport" @mousedown="mouseDownHandler" @wheel.prevent="mouseWheelHandler">
       <div class="elementArea" ref="viewport" :style="{transform: `scale(${zoom})`}">
-        <div class="host" v-for="(host, index) in hosts[0].hosts['unknown hosts']" :key="host.ip" :style="getPosition(index, hosts[0].hosts['unknown hosts'].length, 0, 180)">
+        <div class="host" v-for="(host, index) in hosts[0].hosts['unknown hosts']" :key="host.ip" :style="getPositionStyle(index, hosts[0].hosts['unknown hosts'].length, 0, 180)">
           <div class="box" @mouseover="addHoverToParent" @mouseleave="removeHoverFromParent"/>
-          <div>Mac: {{host.mac}}</div>
-          <div>Ip: {{host.ip}}</div>
+          <div class="info">
+            <div>Mac: {{host.mac}}</div>
+            <div>Ip: {{host.ip}}</div>
+          </div>
         </div>
+        <svg v-for="(host, index) in hosts[0].hosts['unknown hosts']" :key="host.ip + '1'">
+          <line x1="1600" y1="450" :x2="getPosition(index, hosts[0].hosts['unknown hosts'].length, 0, 180).left" :y2="getPosition(index, hosts[0].hosts['unknown hosts'].length, 0, 180).top" stroke="black" />
+        </svg>
       </div>
     </div>
     <a-button type="primary" @click="get_hosts">{{$t("Examples")}}</a-button>
@@ -35,14 +40,26 @@ export default {
       e.target.parentElement.classList.remove('hostHovered')
     },
     getPosition (index, itemCount, startAngle, finishAngle) {
-      const itemAngle = ((finishAngle - startAngle) / (itemCount - 1)) * index
-      const lenghtFromCenter = 700
+      // const itemAngle = ((finishAngle - startAngle) / (itemCount - 1)) * index
+      // const lenghtFromCenter = 700
+      // const center = { top: 450, left: 1600 }
+      // const top = center.top + Math.sin(this.degToRad(itemAngle)) * lenghtFromCenter
+      // const left = center.left + Math.cos(this.degToRad(itemAngle)) * lenghtFromCenter * 2
+      const lenghtFromCenter = 300
       const center = { top: 450, left: 1600 }
-      const top = center.top + Math.sin(this.degToRad(itemAngle)) * lenghtFromCenter
-      const left = center.left + Math.cos(this.degToRad(itemAngle)) * lenghtFromCenter * 2
+      const itemPlace = 3000 / (itemCount - 1) * index
+      const top = center.top - lenghtFromCenter
+      const left = center.left - 1500 + itemPlace
       return {
-        top: `${top}px`,
-        left: `${left}px`
+        top: top,
+        left: left
+      }
+    },
+    getPositionStyle (index, itemCount, startAngle, finishAngle) {
+      const position = this.getPosition(index, itemCount, startAngle, finishAngle)
+      return {
+        top: `${position.top}px`,
+        left: `${position.left}px`
       }
     },
     degToRad (degrees) {
@@ -98,6 +115,7 @@ export default {
     background: #9b9696;
     overflow: auto;
     cursor: grab;
+    position: relative;
   }
   .box{
     width: 100px;
@@ -113,6 +131,8 @@ export default {
     flex-flow: column;
     border-radius: 25px;
     padding: 25px;
+    z-index:2;
+    transform: translate(-100px, -75px);
   }
   .hostHovered{
     z-index: 10;
@@ -122,5 +142,22 @@ export default {
   .elementArea{
     width: 200%;
     height: 200%;
+    z-index:1;
+  }
+  svg{
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+  }
+  .info{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-flow: column;
+  }
+  .info{
+    pointer-events: none;
   }
 </style>
