@@ -436,7 +436,7 @@ function ScanNetworkForHosts ( Subnet )
             return resultHandlerAditional
         end
 
-        local macAddr, vendor = line:match( "MAC Address: (%S+)%s+(.+)" )
+        local macAddr, vendor = line:match( "MAC Address: (%S+)%s+%((.+)%)" )
 
         -- The above should have matched, so capture the MAC address and
         -- vendor information (if provided).  Again, don't increment the
@@ -696,7 +696,7 @@ function findHostsOnNetwork ( Subnet )
 
     -- Resolve the missing information for my host by different means.
     MyHost.macAddr = getMyMacAddr( MyHost.ipNumber )
-    MyHost.vendor = "("..getMyVendor( MyHost.macAddr )..")"
+    MyHost.vendor = getMyVendor( MyHost.macAddr )
 
     -- Now restore my host to the discovered hosts table.
     DiscoveredHosts[ #DiscoveredHosts ] = MyHost
@@ -807,7 +807,7 @@ function genNetworkHostsReport ( Subnet,
 end
 
 function insertHost(host, isKnown)
-    local res = {["ip"] = host.ipNumber, ["mac"] = host.macAddr, ["discription"] = host.description, ["knownHost"] = isKnown}
+    local res = {["ip"] = host.ipNumber, ["mac"] = host.macAddr, ["discription"] = host.description, ["knownHost"] = isKnown, ["vendor"]= host.vendor}
     if host.os ~= nil then
         table.insert(res, {["os"] = host.os})
     end
@@ -841,7 +841,7 @@ function netHosts.main (props)
 
         -- Examine the network to gather data on (visible) hosts.
         AllDiscoveredHosts = findHostsOnNetwork( Subnet )
-
+        MyHost = table.remove(AllDiscoveredHosts)
         -- Sort what we found into lists of known & unknown hosts.
         HostsThatAreKnown, HostsThatAreUnknown =
             sortHostsByFamiliarity( AllDiscoveredHosts )
@@ -859,7 +859,8 @@ function netHosts.main (props)
         for _, NetworkHosts in ipairs( HostsThatAreUnknown ) do
             table.insert(HostsJson, insertHost(NetworkHosts, false))
         end
-        table.insert(objecttoconvert, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson})
+        local myHost = {["ip"] = MyHost.ipNumber, ["mac"] = MyHost.macAddr, ["discription"] = MyHost.description, ["vendor"] = MyHost.vendor}
+        table.insert(objecttoconvert, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson, ["myHost"] = myHost})
     end
     props.hosts = Json.encode( objecttoconvert )
     return props
