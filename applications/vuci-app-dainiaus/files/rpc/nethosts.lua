@@ -22,7 +22,10 @@ NetworkDatabase = { }
 NetworkDatabase.Subnets = {
 
     {   ipv4subnet = "192.168.10.62/24",
-        description = "My home LAN",
+        description = "WAN",
+    },
+    {   ipv4subnet = "192.168.1.0/24",
+        description = "LAN",
     },
 }
 
@@ -337,7 +340,7 @@ function ScanNetworkForHosts ( Subnet )
     -- Use the subnet (string) to form a shell command to carry out
     -- the scan.  We'll use 'nmap' with a simple ping test.
     -- This can be made more complex/thorough, if desired.
-    local shellCommand = "nmap -n -sP "..thisSubnet
+    local shellCommand = "nmap -n -sP -T5 "..thisSubnet
 
     -- Define results handler functions for parsing the lines of the
     -- results file.  The 'nmap' report consists of a header line,
@@ -501,7 +504,7 @@ function getAllMyNICs ( )
     resultHandler = function ( line )
         -- Parse a line from the above shell command.
         -- If the line fails to parse, the returns are nil.
-        local deviceName, ipNumber = line:match( "(%w+)%s+UP%s+([^/]+)" )
+        local deviceName, ipNumber = line:match( "([^ ]+)%s+UP%s+([^/]+)" )
 
         -- If the IP device is "up", then add it as a table to the NICs array.
         -- Note that 'MyNICs' is captured as a non-local variable.
@@ -536,7 +539,7 @@ function getAllMyMACs ( )
     resultHandler = function ( line )
         -- Parse a line from the above shell command.
         -- If the line fails to parse, the returns are nil.
-        local deviceName, macAddr = line:match( "%d+: (%w+):.+ether (%S+)" )
+        local deviceName, macAddr = line:match( "%d+: ([^ ]+):.+ether (%S+)" )
 
         -- If the IP device is an ethernet device, then add it as a table
         -- to the MACs array.  Note that 'MyMACs' is a non-local variable.
@@ -635,10 +638,8 @@ function myMACaddrFromNICname ( myNICname )
     if not myNICname then
         error "Cannot resolve a MAC address from a 'nil' interface name!"
     end
-
     -- Scan the sequence of my MACs to find the one bound to my device name.
     for _, ThisMAC in ipairs( getAllMyMACs() ) do
-
         -- Ensure that the MAC address has a deviceName field.
         if not ThisMAC or not ThisMAC.deviceName then
             error( "Network interface '"..ThisMAC.macAddr..
@@ -654,7 +655,7 @@ function myMACaddrFromNICname ( myNICname )
     end
 
     -- We should have found a match.  (We did successfully scan the network.)
-    error( "Cannot find my own network device's MAC address!" )
+    error( "Cannot find my own network device's MAC address!")
 end
 
 
@@ -805,8 +806,8 @@ function genNetworkHostsReport ( Subnet,
     printHostReport( Subnet, HostsThatAreUnknown, isUnknownTag )
 end
 
-function insertHost(host)
-    local res = {["ip"] = host.ipNumber, ["mac"] = host.macAddr, ["discription"] = host.description}
+function insertHost(host, isKnown)
+    local res = {["ip"] = host.ipNumber, ["mac"] = host.macAddr, ["discription"] = host.description, ["knownHost"] = isKnown}
     if host.os ~= nil then
         table.insert(res, {["os"] = host.os})
     end
@@ -849,17 +850,16 @@ function netHosts.main (props)
         -- genNetworkHostsReport( Subnet, HostsThatAreKnown, HostsThatAreUnknown )
 
         -- generate json
-        local KnownHostsJson = {}
-        local UnknownHostsJson = {}
+        local HostsJson = {}
         -- known hosts
         for _, NetworkHosts in ipairs( HostsThatAreKnown ) do
-            table.insert(KnownHostsJson, insertHost(NetworkHosts))
+            table.insert(HostsJson, insertHost(NetworkHosts, true))
         end
         -- unKnown hosts
         for _, NetworkHosts in ipairs( HostsThatAreUnknown ) do
-            table.insert(UnknownHostsJson, insertHost(NetworkHosts))
+            table.insert(HostsJson, insertHost(NetworkHosts, false))
         end
-        table.insert(objecttoconvert, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = {["known hosts"] = KnownHostsJson, ["unknown hosts"] = UnknownHostsJson}})
+        table.insert(objecttoconvert, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson})
     end
     props.hosts = Json.encode( objecttoconvert )
     return props
