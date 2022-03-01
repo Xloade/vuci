@@ -1,6 +1,9 @@
 <template>
   <div class="example">
     <ZoomDragViewport :showInner="subnets.length>0" :areaWidth="neededWidth" :areaHeight="neededHeight" excludeClassFromDrag="host">
+      <div class="subnet-discriptions" :style="[{top:`${neededHeight/2-50}px`},{left:`${neededWidth/2+200}px`}]">
+        <h1 class="subnet-discription" v-for="subnet in subnets" :key="subnet.discription+'discription'">{{subnet.discription}}</h1>
+      </div>
       <div class="subnet" v-for="(subnet, subnetIndex) in subnets" :key="subnet.discription">
         <div @mousedown.stop class="host" v-for="(host, index) in subnet.hosts" :key="host.ip" :style="getPositionStyle(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex))">
           <div class="box">
@@ -151,6 +154,7 @@ export default {
     position: absolute;
     top: 0px;
     left: 0px;
+    z-index: -1;
   }
   .info{
     display: flex;
@@ -163,5 +167,21 @@ export default {
   }
   .host:hover .info.aditional-info{
     display:flex;
+  }
+  .subnet-discription{
+    font-size: 50px;
+    margin: 0px;
+    padding: 0.5em;
+    width: 400px;
+    text-align: left;
+  }
+  .subnet-discription:first-child{
+    box-shadow: 0 10px 5px -2px #888;
+  }
+  .subnet-discription:last-child{
+    box-shadow: 0 -10px 5px -2px #888
+  }
+  .subnet-discriptions{
+    position: absolute;
   }
 </style>
