@@ -1,8 +1,11 @@
 {
-  "Examples": "Examples",
-  "Example": "Example",
-  "example" : {
-    "Please input text": "Please input text",
-    "Send": "Send"
-  }
+  "Network scan": "Network scan",
+  "Network scan tool": "Network scan tool",
+  "buttons" : {
+    "Start": "Start scan",
+    "Stop": "Stop"
+  },
+  "In progress":"Scanning is currently in progress",
+  "estimated/remaining":"Elapsed: {elapsed} Remaining: {remaining}",
+  "done": "Done!"
 }

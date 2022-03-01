@@ -8,7 +8,7 @@
 </template>
 <script>
 export default {
-  props: ['showInner', 'areaWidth', 'areaHeight', 'excludeClassFromDrag'],
+  props: ['showInner', 'areaWidth', 'areaHeight'],
   data () {
     return {
       zoom: 1,

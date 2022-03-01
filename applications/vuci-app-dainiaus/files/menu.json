@@ -1,10 +1,10 @@
 {
     "dainiaus": {
-        "title": "dainiaus(test)",
+        "title": "Network scan",
         "index": 2000
     },
     "dainiaus/first_dainiaus": {
-        "title": "first dainius(test)",
+        "title": "Network scan tool",
         "view": "vuci-app-dainiaus",
         "index": 1000
     }

@@ -321,14 +321,12 @@ function runShellCommand( shellCommand, resultHandler )
     os.remove( tempFile )
 end
 
+function SubnetNoSlash(ip)
+    local res = ip:match( "(.+)/.+" )
+    return res
+end
 
--------------------------------------------------------------------------------
---
--- Function to query the OS to get hosts on the local network
---
-function ScanNetworkForHosts ( Subnet )
-    local AllDiscoveredHosts = { }
-
+function StartScanNetworkForHosts ( Subnet )
     -- Determine whether IPv4 or IPv6
     local thisSubnet = Subnet.ipv4subnet
 
@@ -340,7 +338,22 @@ function ScanNetworkForHosts ( Subnet )
     -- Use the subnet (string) to form a shell command to carry out
     -- the scan.  We'll use 'nmap' with a simple ping test.
     -- This can be made more complex/thorough, if desired.
-    local shellCommand = "nmap -n -sP -T5 "..thisSubnet
+    local shellCommand = "nmap -n -sP -T2 --stats-every 5s "..thisSubnet
+
+    local pathFriendlySubnet = SubnetNoSlash(thisSubnet)
+    os.execute(shellCommand.." >/tmp/"..pathFriendlySubnet.."-output 2>/tmp/"..pathFriendlySubnet.."-errors &")
+end
+-------------------------------------------------------------------------------
+--
+-- Function to query the OS to get hosts on the local network
+--
+function ScanNetworkForHosts ( Subnet )
+    local AllDiscoveredHosts = { }
+
+    local thisSubnet = Subnet.ipv4subnet
+    local pathFriendlySubnet = SubnetNoSlash(thisSubnet)
+
+    local shellCommand = "sed -E '/Stats:.+elapsed|ARP Ping/d' /tmp/"..pathFriendlySubnet.."-output"
 
     -- Define results handler functions for parsing the lines of the
     -- results file.  The 'nmap' report consists of a header line,
@@ -824,7 +837,7 @@ end
 -------------------------------------------------------------------------------
 --
 netHosts = {}
-function netHosts.main (props)
+function netHosts.results (props)
     local Database = NetworkDatabase
     local HostsThatAreKnown
     local HostsThatAreUnknown
@@ -863,6 +876,68 @@ function netHosts.main (props)
         table.insert(objecttoconvert, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson, ["myHost"] = myHost})
     end
     props.hosts = Json.encode( objecttoconvert )
+    return props
+end
+
+function getProgress(subnet)
+    local subnetPath = SubnetNoSlash(subnet.ipv4subnet)
+    local shellCommand = "tail -2 /tmp/"..subnetPath.."-output"
+
+    local results = {done=false, noProgress=false}
+    local firstLineHandler
+    local secondLineHandler
+
+    firstLineHandler = function ( line )
+        local timeElapsed = line:match( ".+: (.+) elapsed")
+        local start = line:match( "Starting Nmap.+")
+        if timeElapsed then
+            results.timeElapsed=timeElapsed
+            return secondLineHandler
+        elseif start then
+            results.noProgress = true
+        else
+            results.done = true
+        end
+    end
+
+    secondLineHandler = function ( line )
+        local donePct, remainingTime = line:match( ".+About (.+) done.+%((.+)remaining%)")
+        if donePct then
+            results.donePct=donePct
+            results.remainingTime=remainingTime
+        end
+    end
+
+    runShellCommand( shellCommand, firstLineHandler )
+    return results
+end
+
+function netHosts.start (props)
+    os.execute("killall nmap")
+    local Database = NetworkDatabase
+    for _, Subnet in ipairs( Database.Subnets ) do
+        StartScanNetworkForHosts(Subnet)
+    end
+end
+
+function netHosts.stop (props)
+    os.execute("killall nmap")
+end
+
+function netHosts.progress (props)
+    local Database = NetworkDatabase
+    local jsonResults = {}
+    for _, Subnet in ipairs( Database.Subnets ) do
+        local progress = getProgress(Subnet)
+        if progress.noProgress then
+            progress = {["noProgress"]=progress.noProgress, ["done"]=progress.done}
+        else
+            progress = {["noProgress"]=progress.noProgress, ["done"]=progress.done, ["timeElapsed"]=progress.timeElapsed, ["donePct"]=progress.donePct, ["remainingTime"]=progress.remainingTime}
+        end
+
+        table.insert(jsonResults, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet, ["progress"] = progress})
+    end
+    props.results = Json.encode( jsonResults )
     return props
 end
 
