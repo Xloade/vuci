@@ -2,42 +2,44 @@
   <div class="example">
     <div class="overlayedArea">
       <Progress v-if="inProgress" :progress="progress"/>
-      <ZoomDragViewport :showInner="subnets.length>0" :areaWidth="neededWidth" :areaHeight="neededHeight" excludeClassFromDrag="host">
-        <div class="subnet-discriptions" :style="[{top:`${neededHeight/2-50}px`},{left:`${neededWidth/2+200}px`}]">
-          <h1 class="subnet-discription" v-for="subnet in subnets" :key="subnet.discription+'discription'">{{subnet.discription}}</h1>
-        </div>
-        <div class="subnet" v-for="(subnet, subnetIndex) in subnets" :key="subnet.discription">
-          <div @mousedown.stop class="host" v-for="(host, index) in subnet.hosts" :key="host.ip" :style="getPositionStyle(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex))">
-            <div class="box">
-              <RouterSvg v-if="host.vendor=='Teltonika'"/>
-              <DesktopSvg v-else/>
+      <ZoomDragViewport :areaWidth="neededWidth" :areaHeight="neededHeight" excludeClassFromDrag="host">
+        <div v-if="subnets.length>0">
+          <div class="subnet-discriptions" :style="[{top:`${neededHeight/2-50}px`},{left:`${neededWidth/2+200}px`}]">
+            <h1 class="subnet-discription" v-for="subnet in subnets" :key="subnet.discription+'discription'">{{subnet.discription}}</h1>
+          </div>
+          <div class="subnet" v-for="(subnet, subnetIndex) in subnets" :key="subnet.discription">
+            <div @mousedown.stop class="host" v-for="(host, index) in subnet.hosts" :key="host.ip" :style="getPositionStyle(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex))">
+              <div class="box">
+                <RouterSvg v-if="host.vendor=='Teltonika'"/>
+                <DesktopSvg v-else/>
+              </div>
+              <div class="info">
+                <div>Ip: {{host.ip}}</div>
+                <div>Mac: {{host.mac}}</div>
+              </div>
+              <div class="info aditional-info">
+                <div>Vendor: {{host.vendor}}</div>
+              </div>
             </div>
-            <div class="info">
-              <div>Ip: {{host.ip}}</div>
-              <div>Mac: {{host.mac}}</div>
+            <svg class="lines" :style="[{width:`${neededWidth}px`},{height:`${neededHeight}px`}]">
+              <line v-for="(host, index) in subnet.hosts" :key="host.ip + '1'"
+                :x1="neededWidth/2" :y1="neededHeight/2"
+                :x2="getPosition(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex)).left"
+                :y2="getPosition(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex)).top" stroke="black" />
+            </svg>
+          </div>
+          <div class="host myhost" @mousedown.stop :style="[{top:`${neededHeight/2}px`},{left:`${neededWidth/2}px`}]">
+            <div class="box">
+                <RouterSvg/>
+              </div>
+            <div class="info" v-for="subnet in subnets" :key="subnet.discription+'my'">
+              <div>{{subnet.discription}}</div>
+              <div>Mac: {{subnet.myHost.mac}}</div>
+              <div>Ip: {{subnet.myHost.ip}}</div>
             </div>
             <div class="info aditional-info">
-              <div>Vendor: {{host.vendor}}</div>
+              <div>Vendor: {{subnets[0].myHost.vendor}}</div>
             </div>
-          </div>
-          <svg class="lines" :style="[{width:`${neededWidth}px`},{height:`${neededHeight}px`}]">
-            <line v-for="(host, index) in subnet.hosts" :key="host.ip + '1'"
-              :x1="neededWidth/2" :y1="neededHeight/2"
-              :x2="getPosition(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex)).left"
-              :y2="getPosition(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex)).top" stroke="black" />
-          </svg>
-        </div>
-        <div class="host myhost" @mousedown.stop :style="[{top:`${neededHeight/2}px`},{left:`${neededWidth/2}px`}]">
-          <div class="box">
-              <RouterSvg/>
-            </div>
-          <div class="info" v-for="subnet in subnets" :key="subnet.discription+'my'">
-            <div>{{subnet.discription}}</div>
-            <div>Mac: {{subnet.myHost.mac}}</div>
-            <div>Ip: {{subnet.myHost.ip}}</div>
-          </div>
-          <div class="info aditional-info">
-            <div>Vendor: {{subnets[0].myHost.vendor}}</div>
           </div>
         </div>
       </ZoomDragViewport>

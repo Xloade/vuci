@@ -1,20 +1,24 @@
 <template lang="">
   <div class="viewport" ref="viewport" @mousedown="mouseDownHandler" @wheel.prevent="mouseWheelHandler">
-    <div v-if="showInner" ref="elementArea" class="elementArea"
-    :style="[{transform: `scale(${zoom})`},{width:`${areaWidth}px`},{height:`${areaHeight}px`},{transformOrigin:`${originX}px ${originY}px`}]">
+    <div ref="elementArea" class="elementAreaOuter"
+    :style="[{transform: `scale(${zoom})`},{width:`${areaWidth+marginX}px`},{height:`${areaHeight+marginY}px`}]">
+    <div class="elementArea" :style="[{width:`${areaWidth}px`},{height:`${areaHeight}px`}]">
       <slot />
+    </div>
     </div>
   </div>
 </template>
 <script>
 export default {
-  props: ['showInner', 'areaWidth', 'areaHeight'],
+  props: ['areaWidth', 'areaHeight'],
   data () {
     return {
       zoom: 1,
       pos: { top: 0, left: 0, x: 0, y: 0 },
       originY: this.areaHeight / 2,
-      originX: this.areaWidth / 2
+      originX: this.areaWidth / 2,
+      marginX: this.areaWidth,
+      marginY: this.areaHeight
     }
   },
   methods: {
@@ -85,7 +89,13 @@ export default {
     cursor: grab;
     position: relative;
   }
-  .elementArea{
+  .elementAreaOuter{
     z-index:1;
+  }
+  .elementArea{
+    position: relative;
+    top: 25%;
+    left: 25%;
+    overflow: hidden;
   }
 </style>
