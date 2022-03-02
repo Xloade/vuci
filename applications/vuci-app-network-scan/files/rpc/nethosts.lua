@@ -53,8 +53,10 @@ function GetConfUnamed(conf, type)
     end)
     return res
 end
-
-NetworkDatabase.KnownHosts = GetConfUnamed("vuci-app-network-scan", "known_hosts")
+function SetupNetworkDatabase()
+    NetworkDatabase.KnownHosts = GetConfUnamed("vuci-app-network-scan", "known_hosts")
+    NetworkDatabase.CustomPorts = GetConfUnamed("vuci-app-network-scan", "custom_ports")
+end
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 --
@@ -314,7 +316,14 @@ function SubnetNoSlash(ip)
     local res = ip:match( "(.+)/.+" )
     return res
 end
-
+function GetPortsForOption(ports)
+    local res = ""
+    for index, value in ipairs(ports) do
+        if(index ~= 1) then res = res.."," end
+        res = res..value.port
+    end
+    return res
+end
 function StartScanNetworkForHosts ( Subnet )
     -- Determine whether IPv4 or IPv6
     local thisSubnet = Subnet.ipv4subnet
@@ -328,9 +337,16 @@ function StartScanNetworkForHosts ( Subnet )
     -- the scan.  We'll use 'nmap' with a simple ping test.
     -- This can be made more complex/thorough, if desired.
     local uciCursor = Uci.cursor()
-    local speed = uciCursor:get("vuci-app-network-scan", "nmap", "speed")
-    local shellCommand = "nmap -n -sP --stats-every 5s "..speed.." "..thisSubnet
-
+    local options =  uciCursor:get("vuci-app-network-scan", "nmap", "speed")
+    local commonPortScan = uciCursor:get("vuci-app-network-scan", "nmap", "port_common_scan") == "1"
+    local customPortScan = uciCursor:get("vuci-app-network-scan", "nmap", "port_custom_scan") == "1"
+    if commonPortScan then options = options.." --top-ports=100 " end
+    if customPortScan then options = options.." -p "..GetPortsForOption(NetworkDatabase.CustomPorts) end
+    local scanType = " -sP "
+    if commonPortScan or customPortScan then
+        scanType = " -sS "
+    end
+    local shellCommand = "nmap -n --stats-every 5s "..scanType.." "..options.." "..thisSubnet
     local pathFriendlySubnet = SubnetNoSlash(thisSubnet)
     os.execute(shellCommand.." >/tmp/"..pathFriendlySubnet.."-output 2>/tmp/"..pathFriendlySubnet.."-errors &")
 end
@@ -344,7 +360,7 @@ function ScanNetworkForHosts ( Subnet )
     local thisSubnet = Subnet.ipv4subnet
     local pathFriendlySubnet = SubnetNoSlash(thisSubnet)
 
-    local shellCommand = "sed -E '/Stats:.+elapsed|ARP Ping/d' /tmp/"..pathFriendlySubnet.."-output"
+    local shellCommand = "sed -E '/Stats:.+elapsed|Scan Timing/d' /tmp/"..pathFriendlySubnet.."-output"
 
     -- Define results handler functions for parsing the lines of the
     -- results file.  The 'nmap' report consists of a header line,
@@ -360,26 +376,10 @@ function ScanNetworkForHosts ( Subnet )
     -- we have recursive indirect functions, we must pre-declare them.
 
     local resultHandlerInitial
-    local resultHandlerMiddle
-    local resultHandlerFinal
     local resultHandlerAditional
 
 
     resultHandlerInitial = function ( line )
-        -- Attempt to match the 1st of 3 lines returned for each host.
-        local ipNumber = line:match( "Nmap scan report for (%S+)" )
-
-        -- If this is a new host record, the above return is non-nil.
-        -- In that case, create a new host 'object' and set its IP number.
-        -- Add the new host table to the array of discovered hosts.
-        if ipNumber then
-            AllDiscoveredHosts[ #AllDiscoveredHosts + 1 ] =
-                { ipNumber=ipNumber }
-
-            -- Update the handler to parse the 2nd line of the record.
-            return resultHandlerMiddle
-        end
-
         -- It was NOT the first line of a host record -- which is OK.
         -- But now it's required to be the first line of the entire
         -- report.  Either match text from that line or throw an error.
@@ -392,46 +392,31 @@ function ScanNetworkForHosts ( Subnet )
         if line:match( "OS detection performed.+" ) then
             return resultHandlerInitial
         end
-        -- But now it's required to be the last line of the entire
-        -- report.  Either match text from that line or throw an error.
-        if not line:match( "Nmap done.+" ) then
-            error( "Could not detect end of 'nmap' scan!\nLast line: "..line)
-        end
 
-        -- If it DID match the last line of the report, then we must
-        -- return nil (the default) to signal the output parser to stop.
-
-        -- If we do match the first line of the report, continue using
-        -- this same handler, since the very next line of the output
-        -- should be a "Line 1" of the first host record.
-    end
-
-
-    resultHandlerMiddle = function ( line )
-        -- Attempt to match the 2nd of 3 lines returned for each host.
-        local status = line:match( "Host is (%w+)" )
-
-        -- The above should have matched; if not, the scan failed.
-        if not status then
-            error( "Network scan failed for host with IP '"..
-                AllDiscoveredHosts[ #AllDiscoveredHosts ].ipNumber.."'! " )
-        end
-
-        -- Capture the status in the current host record.
-        AllDiscoveredHosts[ #AllDiscoveredHosts ].status = status
-
-        -- Update the handler to parse the 3rd line of the record.
-        return resultHandlerAditional
+        return resultHandlerAditional(line)
     end
 
     resultHandlerAditional = function (line)
+        local ipNumber = line:match( "Nmap scan report for (%S+)" )
+        if ipNumber then
+            AllDiscoveredHosts[ #AllDiscoveredHosts + 1 ] =
+                { ipNumber=ipNumber }
+
+            -- Update the handler to parse the 2nd line of the record.
+            return resultHandlerAditional
+        end
+        local status = line:match( "Host is (%w+)" )
+        if status then
+            AllDiscoveredHosts[ #AllDiscoveredHosts ].status = status
+            return resultHandlerAditional
+        end
         -- first one or two lines
         local pingHeader = line:match( ".*([pP][oO][rR][tT]).*" )
         if pingHeader then
             return resultHandlerAditional
         end
 
-        local port, state, service = line:match("(%d+%/%w+)%s+(.+)%s+(%w+)")
+        local port, state, service = line:match("(%d+%/%w+)%s+([^ ]+)%s+(%w+)")
         if port then
             if AllDiscoveredHosts[ #AllDiscoveredHosts ].ports == nil then
                 AllDiscoveredHosts[ #AllDiscoveredHosts ].ports = {}
@@ -450,8 +435,7 @@ function ScanNetworkForHosts ( Subnet )
             AllDiscoveredHosts[ #AllDiscoveredHosts ].vendor  = vendor
 
             -- Update the handler to parse the 1st line of the NEXT record.
-            return resultHandlerInitial
-            -- return resultHandlerAditional
+            return resultHandlerAditional
         end
 
         local OsNotFound = line:match("Too many fingerprints match this host to give specific OS details")
@@ -905,6 +889,7 @@ end
 
 function netHosts.start (props)
     os.execute("killall nmap")
+    SetupNetworkDatabase()
     local Database = NetworkDatabase
     for _, Subnet in ipairs( Database.Subnets ) do
         StartScanNetworkForHosts(Subnet)

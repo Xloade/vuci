@@ -8,17 +8,31 @@
             <h1 class="subnet-discription" v-for="subnet in subnets" :key="subnet.discription+'discription'">{{subnet.discription}}</h1>
           </div>
           <div class="subnet" v-for="(subnet, subnetIndex) in subnets" :key="subnet.discription">
-            <div @mousedown.stop class="host" v-for="(host, index) in subnet.hosts" :key="host.ip" :style="getPositionStyle(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex))">
+            <div @mousedown.stop :class="['host',{knownHost:host.knownHost}]" v-for="(host, index) in subnet.hosts" :key="host.ip" :style="getPositionStyle(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex))">
               <div class="box">
                 <RouterSvg v-if="host.vendor=='Teltonika'"/>
                 <DesktopSvg v-else/>
               </div>
               <div class="info">
+                <div v-if="host.knownHost">Name: {{host.discription}}</div>
                 <div>Ip: {{host.ip}}</div>
                 <div>Mac: {{host.mac}}</div>
+                <div class="portStatus" v-if="host.ports">
+                  Ports:
+                  <div class="portStatusDot" :style="{background: anyOpenPorts(host.ports)?'green':'red'}"></div>
+                </div>
               </div>
               <div class="info aditional-info">
                 <div>Vendor: {{host.vendor}}</div>
+                <a-table rowKey="port" class="ports" v-if="host.ports" :data-source="host.ports" :columns="pingTableCols" >
+                  <span slot="status" slot-scope="status">
+                    <a-tag
+                      :color="status === 'open' ? 'green' : status === 'closed' ? 'red' : 'orange'"
+                    >
+                      {{ status.toUpperCase() }}
+                    </a-tag>
+                  </span>
+                </a-table>
               </div>
             </div>
             <svg class="lines" :style="[{width:`${neededWidth}px`},{height:`${neededHeight}px`}]">
@@ -60,11 +74,26 @@ export default {
   data () {
     return {
       // subnets: [],
-      subnets: [{ myHost: { mac: '00:1E:42:27:10:11', vendor: 'OpenWrt', ip: '192.168.10.62' }, discription: 'WAN', hosts: [{ mac: '4C:CC:6A:5F:85:5D', knownHost: false, vendor: 'Micro-star Intl', ip: '192.168.10.1' }, { mac: '00:1E:42:4C:08:13', knownHost: false, vendor: 'Teltonika', ip: '192.168.10.2' }, { mac: '4C:CC:6A:5F:8A:1C', knownHost: false, vendor: 'Micro-star Intl', ip: '192.168.10.7' }, { mac: '00:1E:42:32:70:6A', knownHost: false, vendor: 'Teltonika', ip: '192.168.10.8' }, { mac: '4C:CC:6A:5F:85:8D', knownHost: false, vendor: 'Micro-star Intl', ip: '192.168.10.13' }, { mac: '00:1E:42:48:34:FD', knownHost: false, vendor: 'Teltonika', ip: '192.168.10.14' }, { mac: '4C:CC:6A:5F:85:5C', knownHost: false, vendor: 'Micro-star Intl', ip: '192.168.10.16' }, { mac: '00:1E:42:23:E0:67', knownHost: false, vendor: 'Teltonika', ip: '192.168.10.17' }, { mac: '00:1E:42:4A:4C:28', knownHost: false, vendor: 'Teltonika', ip: '192.168.10.26' }, { mac: '1C:1B:0D:E0:15:14', knownHost: false, vendor: 'Giga-byte Technology', ip: '192.168.10.31' }, { mac: '1C:1B:0D:E0:10:67', knownHost: false, vendor: 'Giga-byte Technology', ip: '192.168.10.34' }, { mac: '1C:1B:0D:E0:67:78', knownHost: false, vendor: 'Giga-byte Technology', ip: '192.168.10.37' }, { mac: '00:1E:42:32:AC:2B', knownHost: false, vendor: 'Teltonika', ip: '192.168.10.45' }, { mac: '1C:1B:0D:E0:67:7A', knownHost: false, vendor: 'Giga-byte Technology', ip: '192.168.10.46' }, { mac: '1C:1B:0D:9F:F8:0B', knownHost: false, vendor: 'Giga-byte Technology', ip: '192.168.10.61' }, { mac: '18:C0:4D:3F:24:BD', knownHost: false, vendor: 'Unknown', ip: '192.168.10.101' }, { mac: 'B4:2E:99:14:62:2D', knownHost: false, vendor: 'Unknown', ip: '192.168.10.102' }, { mac: 'D4:5D:64:52:76:A8', knownHost: false, vendor: 'Unknown', ip: '192.168.10.105' }, { mac: '00:D8:61:D8:47:3B', knownHost: false, vendor: 'Unknown', ip: '192.168.10.106' }, { mac: 'B4:2E:99:87:2A:C6', knownHost: false, vendor: 'Unknown', ip: '192.168.10.107' }, { mac: 'B4:2E:99:41:8E:97', knownHost: false, vendor: 'Unknown', ip: '192.168.10.108' }, { mac: '00:1E:42:23:96:66', knownHost: false, vendor: 'Teltonika', ip: '192.168.10.187' }, { mac: '54:BF:64:54:55:C9', knownHost: false, vendor: 'Unknown', ip: '192.168.10.220' }, { mac: '00:1E:42:2B:92:3B', knownHost: false, vendor: 'Teltonika', ip: '192.168.10.254' }], subnet: '192.168.10.62/24' }, { myHost: { mac: '00:1E:42:27:10:10', vendor: 'OpenWrt', ip: '192.168.1.1' }, discription: 'LAN', hosts: [{ mac: '18:D6:C7:04:8D:4F', knownHost: false, vendor: 'Tp-link Technologies', ip: '192.168.1.131' }], subnet: '192.168.1.0/24' }],
+      subnets: [{ myHost: { mac: '00:1E:42:27:10:11', vendor: 'OpenWrt', ip: '192.168.10.62' }, discription: 'WAN', hosts: [{ mac: '4C:CC:6A:5F:85:5D', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Micro-star Intl', ip: '192.168.10.1' }, { mac: '18:C0:4D:3F:24:BD', knownHost: false, ports: [{ status: 'filtered', port: '22/tcp', service: 'ssh' }, { status: 'filtered', port: '64/tcp', service: 'covia' }], vendor: 'Unknown', ip: '192.168.10.101' }, { mac: 'B4:2E:99:14:62:2D', knownHost: false, ports: [{ status: 'filtered', port: '22/tcp', service: 'ssh' }, { status: 'filtered', port: '64/tcp', service: 'covia' }], vendor: 'Unknown', ip: '192.168.10.102' }, { mac: 'E0:D5:5E:26:F4:C2', knownHost: false, ports: [{ status: 'filtered', port: '22/tcp', service: 'ssh' }, { status: 'filtered', port: '64/tcp', service: 'covia' }], vendor: 'Giga-byte Technology', ip: '192.168.10.104' }, { mac: 'D4:5D:64:52:76:A8', knownHost: false, ports: [{ status: 'filtered', port: '22/tcp', service: 'ssh' }, { status: 'filtered', port: '64/tcp', service: 'covia' }], vendor: 'Unknown', ip: '192.168.10.105' }, { mac: '00:D8:61:D8:47:3B', knownHost: false, ports: [{ status: 'filtered', port: '22/tcp', service: 'ssh' }, { status: 'filtered', port: '64/tcp', service: 'covia' }], vendor: 'Unknown', ip: '192.168.10.106' }, { mac: 'B4:2E:99:87:2A:C6', knownHost: false, ports: [{ status: 'filtered', port: '22/tcp', service: 'ssh' }, { status: 'filtered', port: '64/tcp', service: 'covia' }], vendor: 'Unknown', ip: '192.168.10.107' }, { mac: 'B4:2E:99:41:8E:97', knownHost: false, ports: [{ status: 'filtered', port: '22/tcp', service: 'ssh' }, { status: 'filtered', port: '64/tcp', service: 'covia' }], vendor: 'Unknown', ip: '192.168.10.108' }, { mac: '4C:CC:6A:5F:85:8D', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Micro-star Intl', ip: '192.168.10.13' }, { mac: '00:1E:42:48:34:FD', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Teltonika', ip: '192.168.10.14' }, { mac: '4C:CC:6A:5F:85:5C', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Micro-star Intl', ip: '192.168.10.16' }, { mac: '00:1E:42:23:E0:67', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Teltonika', ip: '192.168.10.17' }, { mac: '00:1E:42:23:96:66', knownHost: false, ports: [{ status: 'open', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Teltonika', ip: '192.168.10.187' }, { mac: '00:1E:42:2B:92:3B', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Teltonika', ip: '192.168.10.254' }, { mac: '00:1E:42:4A:4C:28', knownHost: false, ports: [{ status: 'open', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Teltonika', ip: '192.168.10.26' }, { mac: '00:1E:42:22:4C:A7', discription: 'Friendly router', ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], knownHost: true, vendor: 'Teltonika', ip: '192.168.10.32' }, { mac: '1C:1B:0D:E0:10:67', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Giga-byte Technology', ip: '192.168.10.34' }, { mac: '1C:1B:0D:E0:67:78', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Giga-byte Technology', ip: '192.168.10.37' }, { mac: '4C:CC:6A:5F:87:60', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Micro-star Intl', ip: '192.168.10.4' }, { mac: '00:1E:42:32:AC:2B', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Teltonika', ip: '192.168.10.45' }, { mac: '1C:1B:0D:E0:60:AF', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Giga-byte Technology', ip: '192.168.10.49' }, { mac: '1C:1B:0D:E0:67:EF', knownHost: false, ports: [{ status: 'open', port: '22/tcp', service: 'ssh' }, { status: 'filtered', port: '64/tcp', service: 'covia' }], vendor: 'Giga-byte Technology', ip: '192.168.10.55' }, { mac: '1C:1B:0D:9F:F8:0B', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Giga-byte Technology', ip: '192.168.10.61' }, { mac: '4C:CC:6A:5F:8A:1C', knownHost: false, ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Micro-star Intl', ip: '192.168.10.7' }, { mac: '00:1E:42:32:70:6A', knownHost: false, ports: [{ status: 'open', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], vendor: 'Teltonika', ip: '192.168.10.8' }], subnet: '192.168.10.62/24' }, { myHost: { mac: '00:1E:42:27:10:10', vendor: 'OpenWrt', ip: '192.168.1.1' }, discription: 'LAN', hosts: [{ mac: '18:D6:C7:04:8D:4F', discription: 'My pc', ports: [{ status: 'closed', port: '22/tcp', service: 'ssh' }, { status: 'closed', port: '64/tcp', service: 'covia' }], knownHost: true, vendor: 'Tp-link Technologies', ip: '192.168.1.131' }], subnet: '192.168.1.0/24' }],
       neededHeight: 2000,
       progress: [],
       inProgress: false,
-      pingTimeout: null
+      pingTimeout: null,
+      pingTableCols: [
+        {
+          title: 'Port',
+          dataIndex: 'port'
+        },
+        {
+          title: 'Used for',
+          dataIndex: 'service'
+        },
+        {
+          title: 'Status',
+          dataIndex: 'status',
+          scopedSlots: { customRender: 'status' }
+        }
+      ]
     }
   },
   methods: {
@@ -94,7 +123,7 @@ export default {
     getResults () {
       this.$rpc.call('nethosts', 'results', {}).then((r) => {
         this.inProgress = false
-        this.subnets = JSON.parse(r.hosts)
+        this.subnets = this.sortByIp(JSON.parse(r.hosts))
         console.log(JSON.stringify(this.subnets))
         this.progress = []
       })
@@ -106,6 +135,12 @@ export default {
       this.$rpc.call('nethosts', 'stop', {})
       this.progress = []
       this.inProgress = false
+    },
+    sortByIp (subnets) {
+      subnets.forEach(subnet => {
+        subnet.hosts.sort((a, b) => a.ip > b.ip)
+      })
+      return subnets
     },
     getPosition (index, itemCount, offsetY) {
       // const itemAngle = ((finishAngle - startAngle) / (itemCount - 1)) * index
@@ -144,6 +179,13 @@ export default {
     },
     widthFromItemCount (count) {
       return count * 200 + 200
+    },
+    anyOpenPorts (ports) {
+      let res = false
+      ports.forEach(element => {
+        if (element.status === 'open') res = true
+      })
+      return res
     }
   },
   computed: {
@@ -190,12 +232,18 @@ export default {
     cursor: default;
     width: 220px
   }
+  .knownHost .box svg{
+    fill: green;
+  }
   .host:hover{
     width: 400px;
     transform: translate(-200px, -75px);
     z-index: 10;
-    background: rgba(150,150,150);
+    background: rgba(200,200,200);
     box-shadow: 3px 7px 3px 7px rgba(100,100,100,0.5);
+  }
+  .host:hover .box{
+    background: rgba(200,200,200);
   }
   .lines{
     position: absolute;
@@ -236,5 +284,17 @@ export default {
   }
   .btn{
     margin: 5px
+  }
+  .ports{
+    background: white;
+    padding: 3px;
+    border-radius: 3px;
+    margin: 5px 0px
+  }
+  .portStatusDot{
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+    display: inline-block;
   }
 </style>

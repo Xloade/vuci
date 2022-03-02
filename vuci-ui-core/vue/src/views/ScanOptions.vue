@@ -4,9 +4,8 @@
         <vuci-form uci-config="vuci-app-network-scan" ref="settingForm">
             <vuci-named-section name="nmap" v-slot="{ s }" :card="false">
                 <vuci-form-item-select :uci-section="s" :label="'Scan speed'" name="speed" :options="speed" initial="static" required/>
-                <vuci-form-item-switch :uci-section="s" :label="'Enable port scan'" name="port_scan" initial true-value="1" false-value="0"/>
-                <vuci-form-item-switch :uci-section="s" :label="'Enable common port scan'" name="port_common_scan" initial true-value="1" false-value="0" depend="port_scan == '1'"/>
-                <vuci-form-item-switch :uci-section="s" :label="'Enable custom port scan'" name="port_custom_scan" initial true-value="1" false-value="0" depend="port_scan == '1'"/>
+                <vuci-form-item-switch :uci-section="s" :label="'Enable custom port scan'" name="port_custom_scan" initial true-value="1" false-value="0"/>
+                <vuci-form-item-switch :uci-section="s" :label="'Enable common port scan'" name="port_common_scan" initial true-value="1" false-value="0" depend="port_custom_scan == '0'"/>
             </vuci-named-section >
             <h2>{{$t("settings.Custom ports")}}</h2>
             <vuci-typed-section type="custom_ports" addremove :columns="portColumns">

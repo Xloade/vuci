@@ -32,4 +32,7 @@ export default {
         justify-content: center;
         flex-direction: column
     }
+    .subnet{
+        min-width: 300px;
+    }
 </style>
