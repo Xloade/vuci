@@ -2,7 +2,7 @@
   <div class="viewport" ref="viewport" @mousedown="mouseDownHandler" @wheel.prevent="mouseWheelHandler">
     <div ref="elementArea" class="elementAreaOuter"
     :style="[{transform: `scale(${zoom})`},{width:`${areaWidth+marginX}px`},{height:`${areaHeight+marginY}px`}]">
-    <div class="elementArea" :style="[{width:`${areaWidth}px`},{height:`${areaHeight}px`}]">
+    <div class="elementArea" :style="[{width:`${areaWidth}px`},{height:`${areaHeight}px`},{top:`${marginY/2}px`},{left:`${marginX/2}px`}]">
       <slot />
     </div>
     </div>
@@ -17,7 +17,6 @@ export default {
       pos: { top: 0, left: 0, x: 0, y: 0 },
       originY: this.areaHeight / 2,
       originX: this.areaWidth / 2,
-      marginX: this.areaWidth,
       marginY: this.areaHeight
     }
   },
@@ -65,14 +64,22 @@ export default {
       document.removeEventListener('mouseup', this.mouseUpHandler)
     },
     zoomToFit () {
+      if (!isFinite(this.areaWidth)) return
       this.zoom = this.$refs.viewport.clientWidth / this.areaWidth
       this.$refs.viewport.scrollTop = this.$refs.viewport.scrollTopMax / 2
       this.$refs.viewport.scrollLeft = this.$refs.viewport.scrollLeftMax / 2
     }
   },
-  Watch: {
+  computed: {
+    marginX () {
+      return this.areaWidth * 2
+    }
+  },
+  watch: {
     areaWidth () {
-      this.zoomToFit()
+      this.$nextTick(function () {
+        this.zoomToFit()
+      })
     }
   },
   mounted () {
@@ -94,8 +101,6 @@ export default {
   }
   .elementArea{
     position: relative;
-    top: 25%;
-    left: 25%;
     overflow: hidden;
   }
 </style>
