@@ -7,5 +7,9 @@
   },
   "In progress":"Scanning is currently in progress",
   "estimated/remaining":"Elapsed: {elapsed} Remaining: {remaining}",
-  "done": "Done!"
+  "done": "Done!",
+  "settings":{
+    "Custom ports":"Custom ports:",
+    "Known hosts":"Known hosts:"
+  }
 }

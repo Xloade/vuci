@@ -1,11 +1,11 @@
 {
-    "dainiaus": {
+    "network_scan": {
         "title": "Network scan",
         "index": 2000
     },
-    "dainiaus/first_dainiaus": {
+    "network_scan/tool": {
         "title": "Network scan tool",
-        "view": "vuci-app-dainiaus",
+        "view": "vuci-app-network-scan",
         "index": 1000
     }
 }

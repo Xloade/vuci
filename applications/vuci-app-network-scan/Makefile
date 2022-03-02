@@ -1,6 +1,6 @@
 include $(TOPDIR)/rules.mk
 
-APP_TITLE:=Dainiaus
+APP_TITLE:=Network scan
 
 include ../../vuci-app.mk
 
