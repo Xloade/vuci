@@ -1,5 +1,6 @@
 <template>
     <div>
+        <h2>{{$t("settings.Network scan options")}}</h2>
         <vuci-form uci-config="vuci-app-network-scan" ref="settingForm">
             <vuci-named-section name="nmap" v-slot="{ s }" :card="false">
                 <vuci-form-item-select :uci-section="s" :label="'Scan speed'" name="speed" :options="speed" initial="static" required/>
@@ -42,11 +43,6 @@ export default {
         { name: 'macAddr', label: 'Mac adress' },
         { name: 'description', label: 'Host name' }
       ]
-    }
-  },
-  methods: {
-    apply () {
-      this.$refs.settingForm.apply()
     }
   }
 }

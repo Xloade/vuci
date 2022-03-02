@@ -10,6 +10,7 @@
   "done": "Done!",
   "settings":{
     "Custom ports":"Custom ports:",
-    "Known hosts":"Known hosts:"
+    "Known hosts":"Known hosts:",
+    "Network scan options":"Network scan options"
   }
 }

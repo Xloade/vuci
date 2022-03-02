@@ -72,7 +72,6 @@ export default {
       if (this.inProgress) {
         this.stopScan()
       }
-      this.$refs.options.apply()
       this.$rpc.call('nethosts', 'start', {}).then((r) => {
         this.inProgress = true
         this.pingTimeout = setTimeout(this.getProgress, 6000)
