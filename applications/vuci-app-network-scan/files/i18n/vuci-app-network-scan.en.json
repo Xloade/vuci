@@ -3,7 +3,8 @@
   "Network scan tool": "Network scan tool",
   "buttons" : {
     "Start": "Start scan",
-    "Stop": "Stop"
+    "Stop": "Stop",
+    "Re center": "Re center"
   },
   "In progress":"Scanning is currently in progress",
   "estimated/remaining":"Elapsed: {elapsed} Remaining: {remaining}",

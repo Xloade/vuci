@@ -39,6 +39,7 @@
     </div>
     <a-button class="btn" type="primary" @click="startScan" :disabled="inProgress">{{$t("buttons.Start")}}</a-button>
     <a-button class="btn" type="danger" @click="stopScan" :disabled="!inProgress">{{$t("buttons.Stop")}}</a-button>
+    <a-button class="btn" type="secondary" @click="$refs.zoomViewport.zoomToFit()" :disabled="subnets.length<1">{{$t("buttons.Re center")}}</a-button>
     <ScanOptions ref="options"/>
   </div>
 </template>

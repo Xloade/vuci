@@ -1,7 +1,9 @@
 <template lang="">
   <div class="viewport" ref="viewport" @mousedown="mouseDownHandler" @wheel.prevent="mouseWheelHandler">
-    <div ref="elementArea" class="elementAreaOuter"
-    :style="[{transform: `scale(${zoom})`},{width:`${areaWidth+marginX}px`},{height:`${areaHeight+marginY}px`}]">
+    <div
+      ref="elementArea" class="elementAreaOuter"
+      :style="[{transform: `translate(${-scrollLeft}px, ${-scrollTop}px) scale(${zoom}`},{width:`${areaWidth+marginX}px`},{height:`${areaHeight+marginY}px`}]"
+    >
     <div class="elementArea" :style="[{width:`${areaWidth}px`},{height:`${areaHeight}px`},{top:`${marginY/2}px`},{left:`${marginX/2}px`}]">
       <slot />
     </div>
@@ -17,7 +19,9 @@ export default {
       pos: { top: 0, left: 0, x: 0, y: 0 },
       originY: this.areaHeight / 2,
       originX: this.areaWidth / 2,
-      marginY: this.areaHeight
+      marginY: this.areaHeight,
+      scrollTop: 0,
+      scrollLeft: 0
     }
   },
   methods: {
@@ -39,8 +43,8 @@ export default {
       this.$refs.viewport.style.userSelect = 'none'
 
       this.pos = {
-        left: this.$refs.viewport.scrollLeft,
-        top: this.$refs.viewport.scrollTop,
+        left: this.scrollLeft,
+        top: this.scrollTop,
         // Get the current mouse position
         x: e.clientX,
         y: e.clientY
@@ -53,8 +57,8 @@ export default {
       const dy = e.clientY - this.pos.y
 
       // Scroll the element
-      this.$refs.viewport.scrollTop = this.pos.top - dy
-      this.$refs.viewport.scrollLeft = this.pos.left - dx
+      this.scrollTop = this.pos.top - dy
+      this.scrollLeft = this.pos.left - dx
     },
     mouseUpHandler () {
       this.$refs.viewport.style.cursor = 'grab'
@@ -66,8 +70,8 @@ export default {
     zoomToFit () {
       if (!isFinite(this.areaWidth)) return
       this.zoom = this.$refs.viewport.clientWidth / this.areaWidth
-      this.$refs.viewport.scrollTop = this.$refs.viewport.scrollTopMax / 2
-      this.$refs.viewport.scrollLeft = this.$refs.viewport.scrollLeftMax / 2
+      this.scrollTop = (this.areaHeight + this.marginY - this.$refs.viewport.clientHeight) / 2
+      this.scrollLeft = (this.areaWidth + this.marginX - this.$refs.viewport.clientWidth) / 2
     }
   },
   computed: {
@@ -92,15 +96,15 @@ export default {
     width: 100%;
     height: calc(100vh - 150px);
     background: #9b9696;
-    overflow: auto;
     cursor: grab;
     position: relative;
+    overflow: hidden;
   }
   .elementAreaOuter{
+    position: relative;
     z-index:1;
   }
   .elementArea{
     position: relative;
-    overflow: hidden;
   }
 </style>
