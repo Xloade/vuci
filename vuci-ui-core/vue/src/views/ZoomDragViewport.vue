@@ -70,6 +70,9 @@ export default {
     zoomToFit () {
       if (!isFinite(this.areaWidth)) return
       this.zoom = this.$refs.viewport.clientWidth / this.areaWidth
+      if (this.zoom > 0.4) {
+        this.zoom = 0.4
+      }
       this.scrollTop = (this.areaHeight + this.marginY - this.$refs.viewport.clientHeight) / 2
       this.scrollLeft = (this.areaWidth + this.marginX - this.$refs.viewport.clientWidth) / 2
     }
