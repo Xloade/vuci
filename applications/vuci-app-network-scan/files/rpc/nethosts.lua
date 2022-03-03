@@ -30,6 +30,8 @@ NetworkDatabase.Subnets = {
     },
 }
 
+CurrentSettings = {}
+
 local DatabaseOfHostsByMAC = { }
 
 -- Create a sequence (indexed array) of host objects on the local network.
@@ -55,7 +57,7 @@ function GetConfUnamed(conf, type)
 end
 function SetupNetworkDatabase()
     NetworkDatabase.KnownHosts = GetConfUnamed("vuci-app-network-scan", "known_hosts")
-    NetworkDatabase.CustomPorts = GetConfUnamed("vuci-app-network-scan", "custom_ports")
+    NetworkDatabase.CustomPorts = CurrentSettings.ports
 end
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -335,10 +337,12 @@ function StartScanNetworkForHosts ( Subnet )
     -- Use the subnet (string) to form a shell command to carry out
     -- the scan.  We'll use 'nmap' with a simple ping test.
     -- This can be made more complex/thorough, if desired.
-    local uciCursor = Uci.cursor()
-    local options =  uciCursor:get("vuci-app-network-scan", "nmap", "speed")
-    local commonPortScan = uciCursor:get("vuci-app-network-scan", "nmap", "port_common_scan") == "1"
-    local customPortScan = uciCursor:get("vuci-app-network-scan", "nmap", "port_custom_scan") == "1"
+    local options =  CurrentSettings.speed
+    local commonPortScan = CurrentSettings.port_common_scan
+    local customPortScan = CurrentSettings.port_custom_scan
+    if #CurrentSettings.ports < 1 then
+        customPortScan = false
+    end
     if commonPortScan then options = options.." --top-ports=100 " end
     if customPortScan then options = options.." -p "..GetPortsForOption(NetworkDatabase.CustomPorts) end
     local scanType = " -sP "
@@ -842,6 +846,7 @@ end
 
 netHosts = {}
 function netHosts.results (props)
+    CurrentSettings = props.settings
     SetupNetworkDatabase()
     local Database = NetworkDatabase
     local HostsThatAreKnown
@@ -853,8 +858,7 @@ function netHosts.results (props)
     -- Sort the known hosts database into an assoc array keyed by MAC address.
     DatabaseOfHostsByMAC = sortHostsByMACaddress( Database.KnownHosts )
 
-    local uciCursor = Uci.cursor()
-    local isCustomScan = uciCursor:get("vuci-app-network-scan", "nmap", "port_custom_scan") == "1"
+    local isCustomScan = CurrentSettings.port_custom_scan
 
     local objecttoconvert = {}
     -- Now process each subnet in the list of subnets.
@@ -920,6 +924,7 @@ function getProgress(subnet)
 end
 
 function netHosts.start (props)
+    CurrentSettings = props.settings
     os.execute("killall nmap")
     SetupNetworkDatabase()
     local Database = NetworkDatabase
@@ -933,6 +938,7 @@ function netHosts.stop (props)
 end
 
 function netHosts.progress (props)
+    CurrentSettings = props.settings
     local Database = NetworkDatabase
     local jsonResults = {}
     for _, Subnet in ipairs( Database.Subnets ) do

@@ -10,8 +10,24 @@
   "estimated/remaining":"Elapsed: {elapsed} Remaining: {remaining}",
   "done": "Done!",
   "settings":{
-    "Custom ports":"Custom ports:",
-    "Known hosts":"Known hosts:",
-    "Network scan options":"Network scan options"
+    "Known hosts":"Known hosts (save before scan)",
+    "Network scan options":"Network scan options",
+    "Port": "Port",
+    "Port usage": "Port usage",
+    "Please enter":"Please enter {lable}",
+    "Scan speed": "Scan speed",
+    "Common port scan": "Common port scan",
+    "Custom port scan": "Custom port scan",
+    "Custom ports": "Custom ports",
+    "Host name": "Host name",
+    "Mac adress": "Mac adress",
+    "speed":{
+      "Very slow": "Very slow",
+      "Slow": "Slow",
+      "Normal": "Normal",
+      "Fast": "Fast",
+      "Very fast": "Very fast",
+      "Agressive": "Agressive"
+    }
   }
 }

@@ -50,7 +50,8 @@
     <a-button class="btn" type="danger" @click="stopScan" :disabled="!inProgress">{{$t("buttons.Stop")}}</a-button>
     <a-button class="btn" type="secondary" @click="$refs.zoomViewport.zoomToFit()" :disabled="subnets.length<1">{{$t("buttons.Re center")}}</a-button>
     <a-button class="btn" type="secondary" @click="getResults()">Get result again</a-button>
-    <ScanOptions ref="options"/>
+    <SettingsForm ref="settings"/>
+    <KnownHostSettings/>
   </div>
 </template>
 
@@ -58,8 +59,9 @@
 import ZoomDragViewport from './ZoomDragViewport'
 import RouterSvg from './RouterSvg'
 import Progress from './Progress'
-import ScanOptions from './ScanOptions'
+import KnownHostSettings from './KnownHostSettings'
 import Host from './Host'
+import SettingsForm from './SettingsForm'
 export default {
   data () {
     return {
@@ -76,13 +78,13 @@ export default {
       if (this.inProgress) {
         this.stopScan()
       }
-      this.$rpc.call('nethosts', 'start', {}).then((r) => {
+      this.$rpc.call('nethosts', 'start', { settings: this.$refs.settings.form }).then((r) => {
         this.inProgress = true
         this.pingTimeout = setTimeout(this.getProgress, 6000)
       })
     },
     getProgress () {
-      this.$rpc.call('nethosts', 'progress', {}).then((r) => {
+      this.$rpc.call('nethosts', 'progress', { settings: this.$refs.settings.form }).then((r) => {
         this.progress = JSON.parse(r.results)
         let done = true
         console.log(r.results)
@@ -96,7 +98,7 @@ export default {
       })
     },
     getResults () {
-      this.$rpc.call('nethosts', 'results', {}).then((r) => {
+      this.$rpc.call('nethosts', 'results', { settings: this.$refs.settings.form }).then((r) => {
         this.inProgress = false
         this.subnets = this.sortByIp(JSON.parse(r.hosts))
         console.log(JSON.stringify(this.subnets))
@@ -173,8 +175,9 @@ export default {
     ZoomDragViewport,
     RouterSvg,
     Progress,
-    ScanOptions,
-    Host
+    KnownHostSettings,
+    Host,
+    SettingsForm
   }
 }
 </script>
