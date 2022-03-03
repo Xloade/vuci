@@ -117,6 +117,9 @@ export default {
     border-radius: 3px;
     margin: 5px 0px
   }
+  .portStatus{
+    display: inline;
+  }
   .portStatusDot{
     width: 12px;
     height: 12px;
