@@ -5,7 +5,11 @@
       <ZoomDragViewport ref="zoomViewport" :areaWidth="neededWidth" :areaHeight="neededHeight" excludeClassFromDrag="host">
         <div v-if="subnets.length>0">
           <div class="subnet-discriptions" :style="[{top:`${neededHeight/2-50}px`},{left:`${neededWidth/2+200}px`}]">
-            <h1 class="subnet-discription" v-for="subnet in subnets" :key="subnet.discription+'discription'">{{subnet.discription}}</h1>
+            <h1 class="subnet-discription" v-for="subnet in subnets" :key="subnet.discription+'discription'">
+              <template v-if=subnet.isConnected>
+                {{subnet.discription}}
+              </template>
+            </h1>
           </div>
           <div class="subnet" v-for="(subnet, subnetIndex) in subnets" :key="subnet.discription">
             <div @mousedown.stop :class="['host',{knownHost:host.knownHost}]" v-for="(host, index) in subnet.hosts" :key="host.ip" :style="getPositionStyle(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex))">
@@ -26,8 +30,13 @@
             <template v-slot:info>
               <div v-for="subnet in subnets" :key="subnet.discription+'my'">
                 <div>{{subnet.discription}}</div>
-                <div>Mac: {{subnet.myHost.mac}}</div>
-                <div>Ip: {{subnet.myHost.ip}}</div>
+                <template v-if=subnet.isConnected>
+                  <div>Mac: {{subnet.myHost.mac}}</div>
+                  <div>Ip: {{subnet.myHost.ip}}</div>
+                </template>
+                <template v-else>
+                  <div :style="{color:'red'}">Disconnected</div>
+                </template>
               </div>
             </template>
             <template v-slot:info-aditional>
@@ -103,9 +112,13 @@ export default {
       this.inProgress = false
     },
     sortByIp (subnets) {
-      subnets.forEach(subnet => {
-        subnet.hosts.sort((a, b) => a.ip > b.ip)
-      })
+      try {
+        subnets.forEach(subnet => {
+          subnet.hosts.sort((a, b) => a.ip > b.ip)
+        })
+      } catch (error) {
+        subnets.hosts = []
+      }
       return subnets
     },
     getPosition (index, itemCount, offsetY) {

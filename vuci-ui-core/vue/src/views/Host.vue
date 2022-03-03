@@ -99,7 +99,7 @@ export default {
   .host:hover .logo{
     background: rgba(200,200,200);
   }
-  .info{
+  .info, .info *{
     display: flex;
     align-items: center;
     justify-content: center;

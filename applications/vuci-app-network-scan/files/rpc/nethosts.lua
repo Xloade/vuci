@@ -22,7 +22,7 @@ NetworkDatabase = { }
 -- The network configuration
 NetworkDatabase.Subnets = {
 
-    {   ipv4subnet = "192.168.10.62/24",
+    {   ipv4subnet = "192.168.10.0/24",
         description = "WAN",
     },
     {   ipv4subnet = "192.168.1.0/24",
@@ -822,6 +822,24 @@ function insertHost(host, isKnown, isCustomScan)
     return res
 end
 
+function IsConnectedToSubnet(subnet)
+    local shellCommand = "ip r"
+
+    local resultHandler
+
+    local connected = false
+    resultHandler = function ( line )
+        local foundSubnet = line:match( "(%d+.%d+.%d+.%d+/%d+).+" )
+        local subnetDown = line:match( "%d+.%d+.%d+.%d+/%d+.+(linkdown)" )
+        if subnet == foundSubnet and not subnetDown then
+            connected = true
+        end
+        return resultHandler
+    end
+    runShellCommand( shellCommand, resultHandler )
+    return connected
+end
+
 netHosts = {}
 function netHosts.results (props)
     SetupNetworkDatabase()
@@ -841,29 +859,28 @@ function netHosts.results (props)
     local objecttoconvert = {}
     -- Now process each subnet in the list of subnets.
     for _, Subnet in ipairs( Database.Subnets ) do
-
-        -- Examine the network to gather data on (visible) hosts.
-        AllDiscoveredHosts = findHostsOnNetwork( Subnet )
-        MyHost = table.remove(AllDiscoveredHosts)
-        -- Sort what we found into lists of known & unknown hosts.
-        HostsThatAreKnown, HostsThatAreUnknown =
-            sortHostsByFamiliarity( AllDiscoveredHosts )
-
-        -- Generate a report of what we found.
-        -- genNetworkHostsReport( Subnet, HostsThatAreKnown, HostsThatAreUnknown )
-
-        -- generate json
+        local isConnected = IsConnectedToSubnet(Subnet.ipv4subnet)
+        local myHost = {}
         local HostsJson = {}
-        -- known hosts
-        for _, NetworkHosts in ipairs( HostsThatAreKnown ) do
-            table.insert(HostsJson, insertHost(NetworkHosts, true, isCustomScan))
+        if isConnected then
+            -- Examine the network to gather data on (visible) hosts.
+            AllDiscoveredHosts = findHostsOnNetwork( Subnet )
+            MyHost = table.remove(AllDiscoveredHosts)
+            -- Sort what we found into lists of known & unknown hosts.
+            HostsThatAreKnown, HostsThatAreUnknown =
+                sortHostsByFamiliarity( AllDiscoveredHosts )
+    
+            -- known hosts
+            for _, NetworkHosts in ipairs( HostsThatAreKnown ) do
+                table.insert(HostsJson, insertHost(NetworkHosts, true, isCustomScan))
+            end
+            -- unKnown hosts
+            for _, NetworkHosts in ipairs( HostsThatAreUnknown ) do
+                table.insert(HostsJson, insertHost(NetworkHosts, false, isCustomScan))
+            end
+            myHost = {["ip"] = MyHost.ipNumber, ["mac"] = MyHost.macAddr, ["discription"] = MyHost.description, ["vendor"] = MyHost.vendor}
         end
-        -- unKnown hosts
-        for _, NetworkHosts in ipairs( HostsThatAreUnknown ) do
-            table.insert(HostsJson, insertHost(NetworkHosts, false, isCustomScan))
-        end
-        local myHost = {["ip"] = MyHost.ipNumber, ["mac"] = MyHost.macAddr, ["discription"] = MyHost.description, ["vendor"] = MyHost.vendor}
-        table.insert(objecttoconvert, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson, ["myHost"] = myHost})
+        table.insert(objecttoconvert, {["isConnected"] = isConnected ,["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson, ["myHost"] = myHost})
     end
     props.hosts = Json.encode( objecttoconvert )
     return props
