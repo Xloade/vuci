@@ -202,7 +202,7 @@ function validateKnownHosts ( KnownHosts )
 
     -- First off, the KnownHosts table has to actually exist as a table.
     if dataType ~= "table" then
-        error ("Missing or corrupt 'KnownHosts' table in Network Database file! "..KnownHosts)
+        error ("Missing or corrupt 'KnownHosts' table in Network Database file! ")
     end
 
     -- Then, examine/validate each host object in the table.
@@ -239,7 +239,6 @@ end
 -- Validate the NetworkDatabase table prior to using its data
 --
 function validateNetworkDatabase ( Database )
-
     validateSubnets( Database.Subnets )
 
     validateKnownHosts( Database.KnownHosts )
@@ -360,7 +359,7 @@ function ScanNetworkForHosts ( Subnet )
     local thisSubnet = Subnet.ipv4subnet
     local pathFriendlySubnet = SubnetNoSlash(thisSubnet)
 
-    local shellCommand = "sed -E '/Stats:.+elapsed|Scan Timing/d' /tmp/"..pathFriendlySubnet.."-output"
+    local shellCommand = "sed -E '/Stats:.+elapsed|Scan Timing|^$/d' /tmp/"..pathFriendlySubnet.."-output"
 
     -- Define results handler functions for parsing the lines of the
     -- results file.  The 'nmap' report consists of a header line,
@@ -405,7 +404,7 @@ function ScanNetworkForHosts ( Subnet )
             -- Update the handler to parse the 2nd line of the record.
             return resultHandlerAditional
         end
-        local status = line:match( "Host is (%w+)" )
+        local status = line:match( "Host is (%w+).*" )
         if status then
             AllDiscoveredHosts[ #AllDiscoveredHosts ].status = status
             return resultHandlerAditional
@@ -595,7 +594,6 @@ function myNICnameFromIPnumber ( myIPnumber )
     if not myIPnumber then
         error "Cannot resolve an interface name from a 'nil' IP number!"
     end
-
     -- Scan the sequence of my NICs to find the one bound to my IP number.
     for _, ThisNIC in ipairs( getAllMyNICs() ) do
         -- Ensure that the NIC has an ipNumber field.
@@ -794,7 +792,16 @@ function genNetworkHostsReport ( Subnet,
     printHostReport( Subnet, HostsThatAreUnknown, isUnknownTag )
 end
 
-function insertHost(host, isKnown)
+function customPortDiscription(givenPort)
+    local pureGivenPort = givenPort:match("(.+)%/.+")
+    for _, port in ipairs( NetworkDatabase.CustomPorts ) do
+        if port.port == pureGivenPort then
+            return port.usage
+        end
+    end
+end
+
+function insertHost(host, isKnown, isCustomScan)
     local res = {["ip"] = host.ipNumber, ["mac"] = host.macAddr, ["discription"] = host.description, ["knownHost"] = isKnown, ["vendor"]= host.vendor}
     if host.os ~= nil then
         table.insert(res, {["os"] = host.os})
@@ -802,17 +809,22 @@ function insertHost(host, isKnown)
     if host.ports ~= nil then
         local ports = {}
         for _, port in ipairs( host.ports ) do
+            if isCustomScan then
+                local customDiscription = customPortDiscription(port[1])
+                if customDiscription ~= nil or customDiscription == "" then
+                    port[3] = customDiscription
+                end
+            end
             table.insert(ports, {["port"] = port[1], ["status"] = port[2], ["service"] = port[3]})
         end
         res["ports"] = ports
     end
     return res
 end
--------------------------------------------------------------------------------
--------------------------------------------------------------------------------
---
+
 netHosts = {}
 function netHosts.results (props)
+    SetupNetworkDatabase()
     local Database = NetworkDatabase
     local HostsThatAreKnown
     local HostsThatAreUnknown
@@ -822,6 +834,9 @@ function netHosts.results (props)
 
     -- Sort the known hosts database into an assoc array keyed by MAC address.
     DatabaseOfHostsByMAC = sortHostsByMACaddress( Database.KnownHosts )
+
+    local uciCursor = Uci.cursor()
+    local isCustomScan = uciCursor:get("vuci-app-network-scan", "nmap", "port_custom_scan") == "1"
 
     local objecttoconvert = {}
     -- Now process each subnet in the list of subnets.
@@ -841,11 +856,11 @@ function netHosts.results (props)
         local HostsJson = {}
         -- known hosts
         for _, NetworkHosts in ipairs( HostsThatAreKnown ) do
-            table.insert(HostsJson, insertHost(NetworkHosts, true))
+            table.insert(HostsJson, insertHost(NetworkHosts, true, isCustomScan))
         end
         -- unKnown hosts
         for _, NetworkHosts in ipairs( HostsThatAreUnknown ) do
-            table.insert(HostsJson, insertHost(NetworkHosts, false))
+            table.insert(HostsJson, insertHost(NetworkHosts, false, isCustomScan))
         end
         local myHost = {["ip"] = MyHost.ipNumber, ["mac"] = MyHost.macAddr, ["discription"] = MyHost.description, ["vendor"] = MyHost.vendor}
         table.insert(objecttoconvert, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson, ["myHost"] = myHost})
@@ -856,7 +871,7 @@ end
 
 function getProgress(subnet)
     local subnetPath = SubnetNoSlash(subnet.ipv4subnet)
-    local shellCommand = "tail -2 /tmp/"..subnetPath.."-output"
+    local shellCommand = "grep -E 'Starting Nmap.+|.+ elapsed|.+About.+done.+|Nmap done.*' /tmp/"..subnetPath.."-output | tail -2"
 
     local results = {done=false, noProgress=false}
     local firstLineHandler
