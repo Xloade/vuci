@@ -901,19 +901,22 @@ function getProgress(subnet)
     firstLineHandler = function ( line )
         local timeElapsed = line:match( ".+: (.+) elapsed")
         local start = line:match( "Starting Nmap.+")
+        local done = line:match( "Nmap done.+" )
         if timeElapsed then
             results.timeElapsed=timeElapsed
             return secondLineHandler
         elseif start then
             results.noProgress = true
-        else
-            results.done = true
+            return secondLineHandler
         end
     end
 
     secondLineHandler = function ( line )
+        local done = line:match( "Nmap done.+" )
         local donePct, remainingTime = line:match( ".+About (.+)%% done.+%((.+)remaining%)")
-        if donePct then
+        if done then
+            results.done = true
+        elseif donePct then
             results.donePct=donePct
             results.remainingTime=remainingTime
         end
