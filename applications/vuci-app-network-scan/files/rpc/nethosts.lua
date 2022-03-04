@@ -19,17 +19,6 @@ Uci = require 'uci'
 -- local NetworkDatabase = require "mac-addresses"
 NetworkDatabase = { }
 
--- The network configuration
-NetworkDatabase.Subnets = {
-
-    {   ipv4subnet = "192.168.10.0/24",
-        description = "WAN",
-    },
-    {   ipv4subnet = "192.168.1.0/24",
-        description = "LAN",
-    },
-}
-
 CurrentSettings = {}
 
 local DatabaseOfHostsByMAC = { }
@@ -43,9 +32,6 @@ local AllDiscoveredHosts = { }
         -- description [optional]
         -- vendor [optional]
 
--- Can't scan the entire internet...  Draw the line somewhere.
-local minCIDR = 16
-
 
 function GetConfUnamed(conf, type)
     local res = {}
@@ -55,9 +41,28 @@ function GetConfUnamed(conf, type)
     end)
     return res
 end
-function SetupNetworkDatabase()
+
+function SetupSettings(settings)
+    CurrentSettings = settings
     NetworkDatabase.KnownHosts = GetConfUnamed("vuci-app-network-scan", "known_hosts")
     NetworkDatabase.CustomPorts = CurrentSettings.ports
+    if settings.subnet_custom_scan then
+        NetworkDatabase.Subnets = {
+            {   ipv4subnet = settings.subnet.ip.."/"..settings.subnet.mask,
+                description = settings.subnet.ip.."/"..settings.subnet.mask,
+            },
+        }
+    else
+        NetworkDatabase.Subnets = {
+
+            {   ipv4subnet = "192.168.10.0/24",
+                description = "WAN",
+            },
+            {   ipv4subnet = "192.168.1.0/24",
+                description = "LAN",
+            },
+        }
+    end
 end
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -108,13 +113,6 @@ function validateIPv4subnet ( subnet, description )
 
     -- Get CIDR spec as a number; Max=32; Min=0 means "the entire internet".
     cidr = tonumber( cidr )
-
-    -- Don't allow the entire internet (!); cut off at Class A searches.
-    if cidr < minCIDR or cidr > 32 then
-        error( "Bad subnet: CIDR value ("..cidr..
-            ") out of range ("..minCIDR..
-            "..32) for subnet '"..description.."'" )
-    end
 
     -- Scan each octet and ensure values from 0..255.
     for index, octet in ipairs( Octets ) do
@@ -364,7 +362,6 @@ function ScanNetworkForHosts ( Subnet )
     local pathFriendlySubnet = SubnetNoSlash(thisSubnet)
 
     local shellCommand = "sed -E '/Stats:.+elapsed|Scan Timing|^$/d' /tmp/"..pathFriendlySubnet.."-output"
-
     -- Define results handler functions for parsing the lines of the
     -- results file.  The 'nmap' report consists of a header line,
     -- followed by one or more 3-line host records, then an ending line.
@@ -615,7 +612,8 @@ function myNICnameFromIPnumber ( myIPnumber )
     end
 
     -- We should have found a match.  (We did successfully scan the network.)
-    error( "Cannot find my own network interface device!" )
+    -- error( "Cannot find my own network interface device!" )
+    return nil
 end
 
 
@@ -657,41 +655,29 @@ function getMyMacAddr ( myIPnumber )
 
     -- Determine the device name of my NIC used on the network.
     local myNICname = myNICnameFromIPnumber( myIPnumber )
+    if myNICname == nil then return nil end
 
     -- Use that name to determine the MAC address for the IP number.
     return myMACaddrFromNICname( myNICname )
 end
 
-
--------------------------------------------------------------------------------
---
--- Function to get a table of all the devices detected on the network
---
-function findHostsOnNetwork ( Subnet )
+function findHostInfo(DiscoveredHosts)
     local MyHost
-    local subnetDescr = Subnet.description
-
-    -- Scan the network to discover hosts.
-    DiscoveredHosts = ScanNetworkForHosts( Subnet )
-
-    -- Did we get anything?  (Should get at least the host...)
-    if #DiscoveredHosts < 1 then
-        error( "Scan of network "..subnetDescr..
-            " did not return ANY hosts! " )
-    end
-
     -- Extract my host, since it isn't reported in the same way.
     -- Note that my host is always the last one in the list (sequence).
     MyHost = DiscoveredHosts[ #DiscoveredHosts ]
 
     -- Resolve the missing information for my host by different means.
-    MyHost.macAddr = getMyMacAddr( MyHost.ipNumber )
-    MyHost.vendor = getMyVendor( MyHost.macAddr )
+    local HostmacAddr = getMyMacAddr( MyHost.ipNumber )
+    if HostmacAddr ~= nil then
+        MyHost.vendor = getMyVendor( MyHost.macAddr )
+        MyHost.isConnected = true
+    else 
+        MyHost = {isConnected = false}
+    end
 
     -- Now restore my host to the discovered hosts table.
-    DiscoveredHosts[ #DiscoveredHosts ] = MyHost
-
-    return DiscoveredHosts
+    return MyHost
 end
 
 
@@ -846,45 +832,44 @@ end
 
 netHosts = {}
 function netHosts.results (props)
-    CurrentSettings = props.settings
-    SetupNetworkDatabase()
-    local Database = NetworkDatabase
+    SetupSettings(props.settings)
     local HostsThatAreKnown
     local HostsThatAreUnknown
 
     -- Validate the network database read in from another file.
-    validateNetworkDatabase( Database )
+    validateNetworkDatabase( NetworkDatabase )
 
     -- Sort the known hosts database into an assoc array keyed by MAC address.
-    DatabaseOfHostsByMAC = sortHostsByMACaddress( Database.KnownHosts )
+    DatabaseOfHostsByMAC = sortHostsByMACaddress( NetworkDatabase.KnownHosts )
 
     local isCustomScan = CurrentSettings.port_custom_scan
 
     local objecttoconvert = {}
     -- Now process each subnet in the list of subnets.
-    for _, Subnet in ipairs( Database.Subnets ) do
-        local isConnected = IsConnectedToSubnet(Subnet.ipv4subnet)
-        local myHost = {}
+    for _, Subnet in ipairs( NetworkDatabase.Subnets ) do
+        local MyHostJson = {}
         local HostsJson = {}
-        if isConnected then
-            -- Examine the network to gather data on (visible) hosts.
-            AllDiscoveredHosts = findHostsOnNetwork( Subnet )
-            MyHost = table.remove(AllDiscoveredHosts)
-            -- Sort what we found into lists of known & unknown hosts.
-            HostsThatAreKnown, HostsThatAreUnknown =
-                sortHostsByFamiliarity( AllDiscoveredHosts )
-    
-            -- known hosts
-            for _, NetworkHosts in ipairs( HostsThatAreKnown ) do
-                table.insert(HostsJson, insertHost(NetworkHosts, true, isCustomScan))
-            end
-            -- unKnown hosts
-            for _, NetworkHosts in ipairs( HostsThatAreUnknown ) do
-                table.insert(HostsJson, insertHost(NetworkHosts, false, isCustomScan))
-            end
-            myHost = {["ip"] = MyHost.ipNumber, ["mac"] = MyHost.macAddr, ["discription"] = MyHost.description, ["vendor"] = MyHost.vendor}
+        AllDiscoveredHosts = ScanNetworkForHosts( Subnet )
+        MyHost = findHostInfo(AllDiscoveredHosts)
+        if MyHost.isConnected then
+            table.remove(AllDiscoveredHosts)
+            MyHostJson = {["isConnected"] = MyHost.isConnected,["ip"] = MyHost.ipNumber, ["mac"] = MyHost.macAddr, ["discription"] = MyHost.description, ["vendor"] = MyHost.vendor}
+        else
+            MyHostJson = {["isConnected"] = MyHost.isConnected}
         end
-        table.insert(objecttoconvert, {["isConnected"] = isConnected ,["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson, ["myHost"] = myHost})
+        -- Sort what we found into lists of known & unknown hosts.
+        HostsThatAreKnown, HostsThatAreUnknown =
+            sortHostsByFamiliarity( AllDiscoveredHosts )
+
+        -- known hosts
+        for _, NetworkHosts in ipairs( HostsThatAreKnown ) do
+            table.insert(HostsJson, insertHost(NetworkHosts, true, isCustomScan))
+        end
+        -- unKnown hosts
+        for _, NetworkHosts in ipairs( HostsThatAreUnknown ) do
+            table.insert(HostsJson, insertHost(NetworkHosts, false, isCustomScan))
+        end
+        table.insert(objecttoconvert, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson, ["myHost"] = MyHostJson})
     end
     props.hosts = Json.encode( objecttoconvert )
     return props
@@ -893,7 +878,6 @@ end
 function getProgress(subnet)
     local subnetPath = SubnetNoSlash(subnet.ipv4subnet)
     local shellCommand = "grep -E 'Starting Nmap.+|.+ elapsed|.+About.+done.+|Nmap done.*' /tmp/"..subnetPath.."-output | tail -2"
-
     local results = {done=false, noProgress=false}
     local firstLineHandler
     local secondLineHandler
@@ -901,7 +885,6 @@ function getProgress(subnet)
     firstLineHandler = function ( line )
         local timeElapsed = line:match( ".+: (.+) elapsed")
         local start = line:match( "Starting Nmap.+")
-        local done = line:match( "Nmap done.+" )
         if timeElapsed then
             results.timeElapsed=timeElapsed
             return secondLineHandler
@@ -929,11 +912,9 @@ function getProgress(subnet)
 end
 
 function netHosts.start (props)
-    CurrentSettings = props.settings
+    SetupSettings(props.settings)
     os.execute("killall nmap")
-    SetupNetworkDatabase()
-    local Database = NetworkDatabase
-    for _, Subnet in ipairs( Database.Subnets ) do
+    for _, Subnet in ipairs( NetworkDatabase.Subnets ) do
         StartScanNetworkForHosts(Subnet)
     end
 end
@@ -943,10 +924,9 @@ function netHosts.stop (props)
 end
 
 function netHosts.progress (props)
-    CurrentSettings = props.settings
-    local Database = NetworkDatabase
+    SetupSettings(props.settings)
     local jsonResults = {}
-    for _, Subnet in ipairs( Database.Subnets ) do
+    for _, Subnet in ipairs( NetworkDatabase.Subnets ) do
         local progress = getProgress(Subnet)
         if progress.noProgress then
             progress = {["noProgress"]=progress.noProgress, ["done"]=progress.done}

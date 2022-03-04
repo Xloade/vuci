@@ -6,7 +6,7 @@
         <div v-if="subnets.length>0">
           <div class="subnet-discriptions" :style="[{top:`${neededHeight/2-50}px`},{left:`${neededWidth/2+200}px`}]">
             <h1 class="subnet-discription" v-for="subnet in subnets" :key="subnet.discription+'discription'">
-              <template v-if=subnet.isConnected>
+              <template>
                 {{subnet.discription}}
               </template>
             </h1>
@@ -15,7 +15,7 @@
             <div @mousedown.stop :class="['host',{knownHost:host.knownHost}]" v-for="(host, index) in subnet.hosts" :key="host.ip" :style="getPositionStyle(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex))">
               <Host :host="host"/>
             </div>
-            <svg class="lines" :style="[{width:`${neededWidth}px`},{height:`${neededHeight}px`}]">
+            <svg class="lines" v-if=subnet.myHost.isConnected :style="[{width:`${neededWidth}px`},{height:`${neededHeight}px`}]">
               <line v-for="(host, index) in subnet.hosts" :key="host.ip + '1'"
                 :x1="neededWidth/2" :y1="neededHeight/2"
                 :x2="getPosition(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex)).left"
@@ -30,7 +30,7 @@
               <template v-slot:info>
                 <div v-for="subnet in subnets" :key="subnet.discription+'my'">
                   <div>{{subnet.discription}}</div>
-                  <template v-if=subnet.isConnected>
+                  <template v-if=subnet.myHost.isConnected>
                     <div>Mac: {{subnet.myHost.mac}}</div>
                     <div>Ip: {{subnet.myHost.ip}}</div>
                   </template>
@@ -40,7 +40,7 @@
                 </div>
               </template>
               <template v-slot:info-aditional>
-                <div>Vendor: {{subnets[0].myHost.vendor}}</div>
+                <div class=""></div>
               </template>
             </Host>
           </div>
@@ -198,14 +198,14 @@ export default {
     font-size: 50px;
     margin: 0px;
     padding: 0.5em;
-    width: 400px;
+    width: 500px;
     text-align: left;
-  }
-  .subnet-discription:first-child{
-    box-shadow: 0 10px 5px -2px #888;
   }
   .subnet-discription:last-child{
     box-shadow: 0 -10px 5px -2px #888
+  }
+  .subnet-discription:first-child{
+    box-shadow: 0 10px 5px -2px #888;
   }
   .subnet-discriptions{
     position: absolute;
