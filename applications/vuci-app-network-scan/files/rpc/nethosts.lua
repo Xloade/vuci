@@ -908,6 +908,8 @@ function getProgress(subnet)
         elseif start then
             results.noProgress = true
             return secondLineHandler
+        else
+            return secondLineHandler
         end
     end
 
