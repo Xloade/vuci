@@ -812,24 +812,6 @@ function insertHost(host, isKnown, isCustomScan)
     return res
 end
 
-function IsConnectedToSubnet(subnet)
-    local shellCommand = "ip r"
-
-    local resultHandler
-
-    local connected = false
-    resultHandler = function ( line )
-        local foundSubnet = line:match( "(%d+.%d+.%d+.%d+/%d+).+" )
-        local subnetDown = line:match( "%d+.%d+.%d+.%d+/%d+.+(linkdown)" )
-        if subnet == foundSubnet and not subnetDown then
-            connected = true
-        end
-        return resultHandler
-    end
-    runShellCommand( shellCommand, resultHandler )
-    return connected
-end
-
 netHosts = {}
 function netHosts.results (props)
     SetupSettings(props.settings)
