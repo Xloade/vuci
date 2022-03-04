@@ -9,10 +9,15 @@
   "In progress":"Scanning is currently in progress",
   "estimated/remaining":"Elapsed: {elapsed} Remaining: {remaining}",
   "done": "Done!",
+  "Port": "Port",
+  "port": "port",
+  "ip": "ip",
+  "mac": "mac",
+  "mask": "mask",
+  "description": "v",
   "settings":{
     "Known hosts":"Known hosts (save before scan)",
     "Network scan options":"Network scan options",
-    "Port": "Port",
     "Port usage": "Port usage",
     "Please enter":"Please enter {lable}",
     "Scan speed": "Scan speed",
@@ -21,6 +26,8 @@
     "Custom ports": "Custom ports",
     "Host name": "Host name",
     "Mac adress": "Mac adress",
+    "Custom subnet scan": "Custom subnet scan",
+    "Custom subnet": "Custom subnet",
     "speed":{
       "Very slow": "Very slow",
       "Slow": "Slow",
@@ -28,6 +35,7 @@
       "Fast": "Fast",
       "Very fast": "Very fast",
       "Agressive": "Agressive"
-    }
+    },
+    "Must be valid": "Must be valid {lable}"
   }
 }

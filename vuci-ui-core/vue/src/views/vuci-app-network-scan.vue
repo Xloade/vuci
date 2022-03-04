@@ -76,12 +76,16 @@ export default {
   },
   methods: {
     startScan () {
-      if (this.inProgress) {
-        this.stopScan()
-      }
-      this.$rpc.call('nethosts', 'start', { settings: this.$refs.settings.form }).then((r) => {
-        this.inProgress = true
-        this.pingTimeout = setTimeout(this.getProgress, 6000)
+      this.$refs.settings.formRef.validate(valid => {
+        if (valid) {
+          if (this.inProgress) {
+            this.stopScan()
+          }
+          this.$rpc.call('nethosts', 'start', { settings: this.$refs.settings.form }).then((r) => {
+            this.inProgress = true
+            this.pingTimeout = setTimeout(this.getProgress, 6000)
+          })
+        }
       })
     },
     getProgress () {
