@@ -22,27 +22,28 @@
                 :y2="getPosition(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex)).top" stroke="black" />
             </svg>
           </div>
-
-          <Host class="host myhost" @mousedown.stop :style="[{top:`${neededHeight/2}px`},{left:`${neededWidth/2}px`}]">
-            <template v-slot:logo>
-                <RouterSvg/>
-            </template>
-            <template v-slot:info>
-              <div v-for="subnet in subnets" :key="subnet.discription+'my'">
-                <div>{{subnet.discription}}</div>
-                <template v-if=subnet.isConnected>
-                  <div>Mac: {{subnet.myHost.mac}}</div>
-                  <div>Ip: {{subnet.myHost.ip}}</div>
-                </template>
-                <template v-else>
-                  <div :style="{color:'red'}">Disconnected</div>
-                </template>
-              </div>
-            </template>
-            <template v-slot:info-aditional>
-              <div>Vendor: {{subnets[0].myHost.vendor}}</div>
-            </template>
-          </Host>
+          <div class="host myhost" @mousedown.stop :style="[{top:`${neededHeight/2}px`},{left:`${neededWidth/2}px`}]">
+            <Host>
+              <template v-slot:logo>
+                  <RouterSvg/>
+              </template>
+              <template v-slot:info>
+                <div v-for="subnet in subnets" :key="subnet.discription+'my'">
+                  <div>{{subnet.discription}}</div>
+                  <template v-if=subnet.isConnected>
+                    <div>Mac: {{subnet.myHost.mac}}</div>
+                    <div>Ip: {{subnet.myHost.ip}}</div>
+                  </template>
+                  <template v-else>
+                    <div :style="{color:'red'}">Disconnected</div>
+                  </template>
+                </div>
+              </template>
+              <template v-slot:info-aditional>
+                <div>Vendor: {{subnets[0].myHost.vendor}}</div>
+              </template>
+            </Host>
+          </div>
         </div>
       </ZoomDragViewport>
     </div>
