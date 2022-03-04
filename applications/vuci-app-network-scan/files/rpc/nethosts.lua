@@ -21,7 +21,44 @@ NetworkDatabase = { }
 
 CurrentSettings = {}
 
+MaskLookUpTable = {
+    ['0.0.0.0'] = 0,
+    ['128.0.0.0'] = 1,
+    ['192.0.0.0'] = 2,
+    ['224.0.0.0'] = 3,
+    ['240.0.0.0'] = 4,
+    ['248.0.0.0'] = 5,
+    ['252.0.0.0'] = 6,
+    ['254.0.0.0'] = 7,
+    ['255.0.0.0'] = 8,
+    ['255.128.0.0'] = 9,
+    ['255.192.0.0'] = 10,
+    ['255.224.0.0'] = 11,
+    ['255.240.0.0'] = 12,
+    ['255.248.0.0'] = 13,
+    ['255.252.0.0'] = 14,
+    ['255.254.0.0'] = 15,
+    ['255.255.0.0'] = 16,
+    ['255.255.128.0'] = 17,
+    ['255.255.192.0'] = 18,
+    ['255.255.224.0'] = 19,
+    ['255.255.240.0'] = 20,
+    ['255.255.248.0'] = 21,
+    ['255.255.252.0'] = 22,
+    ['255.255.254.0'] = 23,
+    ['255.255.255.0'] = 24,
+    ['255.255.255.128'] = 25,
+    ['255.255.255.192'] = 26,
+    ['255.255.255.224'] = 27,
+    ['255.255.255.240'] = 28,
+    ['255.255.255.248'] = 29,
+    ['255.255.255.252'] = 30,
+    ['255.255.255.254'] = 31,
+    ['255.255.255.255'] = 32,
+}
+
 local DatabaseOfHostsByMAC = { }
+
 
 -- Create a sequence (indexed array) of host objects on the local network.
 local AllDiscoveredHosts = { }
@@ -48,18 +85,30 @@ function SetupSettings(settings)
     NetworkDatabase.CustomPorts = CurrentSettings.ports
     if settings.subnet_custom_scan then
         NetworkDatabase.Subnets = {
-            {   ipv4subnet = settings.subnet.ip.."/"..settings.subnet.mask,
+            {   
+                ipv4subnet = settings.subnet.ip.."/"..settings.subnet.mask,
                 description = settings.subnet.ip.."/"..settings.subnet.mask,
+                isSetup = true
             },
         }
     else
+        local c = Uci.cursor()
+        local wanIp = c:get("network", "wan", "ipaddr")
+        local wanMask = c:get("network", "wan", "netmask")
+        local wanSetup = wanIp ~= nil and wanIp ~= "" and wanMask ~= nil and wanMask ~= ""
+        local lanIp = c:get("network", "lan", "ipaddr")
+        local lanMask = c:get("network", "lan", "netmask")
+        local lanSetup = lanIp ~= nil and lanIp ~= "" and lanMask ~= nil and lanMask ~= ""
         NetworkDatabase.Subnets = {
-
-            {   ipv4subnet = "192.168.10.0/24",
+            {   
+                ipv4subnet = wanIp.."/"..MaskLookUpTable[wanMask],
                 description = "WAN",
+                isSetup = wanSetup
             },
-            {   ipv4subnet = "192.168.1.0/24",
+            {   
+                ipv4subnet = lanIp.."/"..MaskLookUpTable[lanMask],
                 description = "LAN",
+                isSetup = lanSetup
             },
         }
     end
@@ -668,12 +717,19 @@ function findHostInfo(DiscoveredHosts)
     MyHost = DiscoveredHosts[ #DiscoveredHosts ]
 
     -- Resolve the missing information for my host by different means.
-    local HostmacAddr = getMyMacAddr( MyHost.ipNumber )
-    if HostmacAddr ~= nil then
-        MyHost.vendor = getMyVendor( MyHost.macAddr )
-        MyHost.isConnected = true
-    else 
-        MyHost = {isConnected = false}
+    local isConnected = IsConnectedToSubnet(MyHost.ipNumber)
+    if isConnected then
+        local HostmacAddr = getMyMacAddr( MyHost.ipNumber )
+        if HostmacAddr ~= nil then
+            MyHost.macAddr = HostmacAddr
+            MyHost.vendor = getMyVendor( MyHost.macAddr )
+            MyHost.isInSubnet = true
+            MyHost.isConnected = isConnected
+        else 
+            MyHost = {isInSubnet = false, isConnected = isConnected}
+        end
+    else
+        MyHost = {isInSubnet = false, isConnected = isConnected}
     end
 
     -- Now restore my host to the discovered hosts table.
@@ -812,17 +868,16 @@ function insertHost(host, isKnown, isCustomScan)
     return res
 end
 
-function IsConnectedToSubnet(subnet)
+function IsConnectedToSubnet(hostIp)
     local shellCommand = "ip r"
 
     local resultHandler
 
-    local connected = false
+    local connected = true
     resultHandler = function ( line )
-        local foundSubnet = line:match( "(%d+.%d+.%d+.%d+/%d+).+" )
-        local subnetDown = line:match( "%d+.%d+.%d+.%d+/%d+.+(linkdown)" )
-        if subnet == foundSubnet and not subnetDown then
-            connected = true
+        local ipDown = line:match( "%d+%.%d+%.%d+%.%d+.+ (%d+%.%d+%.%d+%.%d+) (linkdown).*" )
+        if ipDown == hostIp then
+            connected = false
         end
         return resultHandler
     end
@@ -849,27 +904,37 @@ function netHosts.results (props)
     for _, Subnet in ipairs( NetworkDatabase.Subnets ) do
         local MyHostJson = {}
         local HostsJson = {}
-        AllDiscoveredHosts = ScanNetworkForHosts( Subnet )
-        MyHost = findHostInfo(AllDiscoveredHosts)
-        if MyHost.isConnected then
-            table.remove(AllDiscoveredHosts)
-            MyHostJson = {["isConnected"] = MyHost.isConnected,["ip"] = MyHost.ipNumber, ["mac"] = MyHost.macAddr, ["discription"] = MyHost.description, ["vendor"] = MyHost.vendor}
-        else
-            MyHostJson = {["isConnected"] = MyHost.isConnected}
-        end
-        -- Sort what we found into lists of known & unknown hosts.
-        HostsThatAreKnown, HostsThatAreUnknown =
-            sortHostsByFamiliarity( AllDiscoveredHosts )
+        if Subnet.isSetup then
+            AllDiscoveredHosts = ScanNetworkForHosts( Subnet )
+            if #AllDiscoveredHosts > 0 then
+                MyHost = findHostInfo(AllDiscoveredHosts)
+                if MyHost.isInSubnet then
+                    table.remove(AllDiscoveredHosts)
+                    MyHostJson = {["isInSubnet"] = MyHost.isInSubnet, ["isConnected"] = MyHost.isConnected,["ip"] = MyHost.ipNumber, ["mac"] = MyHost.macAddr, ["discription"] = MyHost.description, ["vendor"] = MyHost.vendor}
+                elseif not MyHost.isConnected then
+                    table.remove(AllDiscoveredHosts)
+                    MyHostJson = {["isInSubnet"] = MyHost.isInSubnet, ["isConnected"] = MyHost.isConnected}
+                else
+                    MyHostJson = {["isInSubnet"] = MyHost.isInSubnet, ["isConnected"] = MyHost.isConnected}
+                end
+            else
+                -- to be disconnected you need have down link and host in subnet
+                MyHostJson = {["isInSubnet"] = false, ["isConnected"] = true}
+            end
+            -- Sort what we found into lists of known & unknown hosts.
+            HostsThatAreKnown, HostsThatAreUnknown =
+                sortHostsByFamiliarity( AllDiscoveredHosts )
 
-        -- known hosts
-        for _, NetworkHosts in ipairs( HostsThatAreKnown ) do
-            table.insert(HostsJson, insertHost(NetworkHosts, true, isCustomScan))
+            -- known hosts
+            for _, NetworkHosts in ipairs( HostsThatAreKnown ) do
+                table.insert(HostsJson, insertHost(NetworkHosts, true, isCustomScan))
+            end
+            -- unKnown hosts
+            for _, NetworkHosts in ipairs( HostsThatAreUnknown ) do
+                table.insert(HostsJson, insertHost(NetworkHosts, false, isCustomScan))
+            end
         end
-        -- unKnown hosts
-        for _, NetworkHosts in ipairs( HostsThatAreUnknown ) do
-            table.insert(HostsJson, insertHost(NetworkHosts, false, isCustomScan))
-        end
-        table.insert(objecttoconvert, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson, ["myHost"] = MyHostJson})
+        table.insert(objecttoconvert, {["isSetup"]=Subnet.isSetup,["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet,["hosts"] = HostsJson, ["myHost"] = MyHostJson})
     end
     props.hosts = Json.encode( objecttoconvert )
     return props
@@ -915,7 +980,9 @@ function netHosts.start (props)
     SetupSettings(props.settings)
     os.execute("killall nmap")
     for _, Subnet in ipairs( NetworkDatabase.Subnets ) do
-        StartScanNetworkForHosts(Subnet)
+        if Subnet.isSetup then
+            StartScanNetworkForHosts(Subnet)
+        end
     end
 end
 
@@ -925,18 +992,22 @@ end
 
 function netHosts.progress (props)
     SetupSettings(props.settings)
-    local jsonResults = {}
+    local ResultsJson = {}
+    local ProgressJson = {}
     for _, Subnet in ipairs( NetworkDatabase.Subnets ) do
-        local progress = getProgress(Subnet)
-        if progress.noProgress then
-            progress = {["noProgress"]=progress.noProgress, ["done"]=progress.done}
+        if not Subnet.isSetup then
+            ProgressJson = {["noProgress"]=false, ["done"]=true}
         else
-            progress = {["noProgress"]=progress.noProgress, ["done"]=progress.done, ["timeElapsed"]=progress.timeElapsed, ["donePct"]=progress.donePct, ["remainingTime"]=progress.remainingTime}
+            local progress = getProgress(Subnet)
+            if progress.noProgress then
+                ProgressJson = {["noProgress"]=progress.noProgress, ["done"]=progress.done}
+            else
+                ProgressJson = {["noProgress"]=progress.noProgress, ["done"]=progress.done, ["timeElapsed"]=progress.timeElapsed, ["donePct"]=progress.donePct, ["remainingTime"]=progress.remainingTime}
+            end
         end
-
-        table.insert(jsonResults, {["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet, ["progress"] = progress})
+        table.insert(ResultsJson, {["isSetup"] = Subnet.isSetup ,["discription"] = Subnet.description, ["subnet"] = Subnet.ipv4subnet, ["progress"] = ProgressJson})
     end
-    props.results = Json.encode( jsonResults )
+    props.results = Json.encode( ResultsJson )
     return props
 end
 

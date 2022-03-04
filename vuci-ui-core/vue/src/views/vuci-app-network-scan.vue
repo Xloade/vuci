@@ -15,7 +15,7 @@
             <div @mousedown.stop :class="['host',{knownHost:host.knownHost}]" v-for="(host, index) in subnet.hosts" :key="host.ip" :style="getPositionStyle(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex))">
               <Host :host="host"/>
             </div>
-            <svg class="lines" v-if=subnet.myHost.isConnected :style="[{width:`${neededWidth}px`},{height:`${neededHeight}px`}]">
+            <svg class="lines" v-if=subnet.myHost.isInSubnet :style="[{width:`${neededWidth}px`},{height:`${neededHeight}px`}]">
               <line v-for="(host, index) in subnet.hosts" :key="host.ip + '1'"
                 :x1="neededWidth/2" :y1="neededHeight/2"
                 :x2="getPosition(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex)).left"
@@ -30,12 +30,18 @@
               <template v-slot:info>
                 <div v-for="subnet in subnets" :key="subnet.discription+'my'">
                   <div>{{subnet.discription}}</div>
-                  <template v-if=subnet.myHost.isConnected>
+                  <template v-if=subnet.myHost.isInSubnet>
                     <div>Mac: {{subnet.myHost.mac}}</div>
                     <div>Ip: {{subnet.myHost.ip}}</div>
                   </template>
-                  <template v-else>
+                  <template v-else-if=!subnet.isSetup>
+                    <div :style="{color:'red'}">{{subnet.discription}} not setup</div>
+                  </template>
+                  <template v-else-if=!subnet.myHost.isConnected>
                     <div :style="{color:'red'}">Disconnected</div>
+                  </template>
+                  <template v-else>
+                    <div :style="{color:'red'}">Not in subnet</div>
                   </template>
                 </div>
               </template>
