@@ -18,7 +18,7 @@
             <div @mousedown.stop :class="['host',{knownHost:host.knownHost}]" v-for="(host, index) in subnet.hosts" :key="host.ip" :style="getPositionStyle(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex))">
               <Host :host="host"/>
             </div>
-            <svg class="lines" v-if=subnet.myHost.isInSubnet :style="[{width:`${neededWidth}px`},{height:`${neededHeight}px`}]">
+            <svg class="lines" :style="[{width:`${neededWidth}px`},{height:`${neededHeight}px`}]">
               <line v-for="(host, index) in subnet.hosts" :key="host.ip + '1'"
                 :x1="neededWidth/2" :y1="neededHeight/2"
                 :x2="getPosition(index, getHostNumFromSubNet(subnet), getOffsetY(subnetIndex)).left"
