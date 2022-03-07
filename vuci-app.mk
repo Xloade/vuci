@@ -47,6 +47,10 @@ define Package/$(PKG_NAME)/install
 	    $(INSTALL_DATA) ./files/rpc/$$$$f $(1)/usr/lib/vuci-httpd/rpc/$$$${f%.*}; \
 	  done \
 	fi
+	if [ -f ./files/uci.config ];then \
+	  $(INSTALL_DIR) $(1)/etc/config; \
+	  $(INSTALL_CONF) ./files/uci.config $(1)/etc/config/$(APP_NAME); \
+	fi
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

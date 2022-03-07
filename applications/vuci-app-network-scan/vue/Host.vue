@@ -56,7 +56,7 @@ export default {
         },
         {
           title: 'Used for',
-          dataIndex:'service'
+          dataIndex: 'service'
         },
         {
           title: 'Status',

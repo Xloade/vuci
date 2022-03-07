@@ -93,20 +93,20 @@ function SetupSettings(settings)
         }
     else
         local c = Uci.cursor()
-        local wanIp = c:get("network", "wan", "ipaddr")
-        local wanMask = c:get("network", "wan", "netmask")
-        local wanSetup = wanIp ~= nil and wanIp ~= "" and wanMask ~= nil and wanMask ~= ""
-        local lanIp = c:get("network", "lan", "ipaddr")
-        local lanMask = c:get("network", "lan", "netmask")
-        local lanSetup = lanIp ~= nil and lanIp ~= "" and lanMask ~= nil and lanMask ~= ""
+        local wanIp = c:get("network", "wan", "ipaddr") or ""
+        local wanMask = MaskLookUpTable[c:get("network", "wan", "netmask")] or ""
+        local wanSetup = wanIp ~= "" and wanMask ~= ""
+        local lanIp = c:get("network", "lan", "ipaddr") or ""
+        local lanMask = MaskLookUpTable[c:get("network", "lan", "netmask")] or ""
+        local lanSetup = lanIp ~= "" and lanMask ~= ""
         NetworkDatabase.Subnets = {
             {   
-                ipv4subnet = wanIp.."/"..MaskLookUpTable[wanMask],
+                ipv4subnet = wanIp.."/"..wanMask,
                 description = "WAN",
                 isSetup = wanSetup
             },
             {   
-                ipv4subnet = lanIp.."/"..MaskLookUpTable[lanMask],
+                ipv4subnet = lanIp.."/"..lanMask,
                 description = "LAN",
                 isSetup = lanSetup
             },
@@ -890,9 +890,6 @@ function netHosts.results (props)
     SetupSettings(props.settings)
     local HostsThatAreKnown
     local HostsThatAreUnknown
-
-    -- Validate the network database read in from another file.
-    validateNetworkDatabase( NetworkDatabase )
 
     -- Sort the known hosts database into an assoc array keyed by MAC address.
     DatabaseOfHostsByMAC = sortHostsByMACaddress( NetworkDatabase.KnownHosts )
