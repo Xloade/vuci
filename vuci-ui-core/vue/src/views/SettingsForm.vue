@@ -1,62 +1,66 @@
 <template>
   <div>
     <h2>{{$t("settings.Network scan options")}}</h2>
-    <a-form-model ref="form" :rules="rules" :model="form" :label-col="labelCol" :wrapper-col="wrapperCol">
-      <a-form-model-item :label="$t('settings.Scan speed')">
-        <a-radio-group v-model="form.speed">
-            <a-radio-button value="-T0">
-            {{$t("settings.speed.Very slow")}}
-            </a-radio-button>
-            <a-radio-button value="-T1">
-            {{$t("settings.speed.Slow")}}
-            </a-radio-button>
-            <a-radio-button value="-T2">
-            {{$t("settings.speed.Normal")}}
-            </a-radio-button>
-            <a-radio-button value="-T3">
-            {{$t("settings.speed.Fast")}}
-            </a-radio-button>
-            <a-radio-button value="-T4">
-            {{$t("settings.speed.Very fast")}}
-            </a-radio-button>
-            <a-radio-button value="-T5">
-            {{$t("settings.speed.Agressive")}}
-            </a-radio-button>
-        </a-radio-group>
-      </a-form-model-item>
-      <a-form-model-item :label="$t('settings.Common port scan')" >
-        <a-switch v-model="form.port_common_scan" :disabled="form.port_custom_scan"/>
-      </a-form-model-item>
-      <a-form-model-item :label="$t('settings.Custom port scan')">
-        <a-switch v-model="form.port_custom_scan" :disabled="form.port_common_scan"/>
-      </a-form-model-item>
-      <a-form-model-item :label="$t('settings.Custom ports')" v-if="form.port_custom_scan">
-          <a-table :columns="portColumns" :data-source="form.ports" :rowKey="(a) => a.portIndex.toString()">
-            <a-form-model-item :prop="`ports[${index}].port`" :rules="rules.port" slot="portForm" slot-scope="text, record, index">
-              <a-input :placeholder="$t('settings.Please enter', {lable:$t('port')})" v-model="form.ports[index].port"/>
-            </a-form-model-item>
-            <a-form-model-item :prop="`ports[${index}].discription`" slot="discriptionForm" slot-scope="text, record, index">
-              <a-input :placeholder="$t('settings.Please enter', {lable:$t('settings.Port usage')})" v-model="form.ports[index].discription"/>
-            </a-form-model-item>
-              <a-button type="danger"  slot="operation" slot-scope="text, record, index" @click="form.ports.splice(index, 1)">{{$t('Delete')}}</a-button>
-          </a-table>
-          <a-button type="primary" @click="addPort">{{$t('Add')}}</a-button>
-      </a-form-model-item>
-      <a-form-model-item :label="$t('settings.Custom subnet scan')">
-        <a-switch v-model="form.subnet_custom_scan"/>
-      </a-form-model-item>
-      <a-form-model-item :label="$t('settings.Custom subnet')" v-if="form.subnet_custom_scan" prop="subnet">
-        <a-input-group>
-          <a-input v-model="form.subnet.ip" style="width: 130px" :placeholder="$t('ip')"/>
-          <a-input
-            style=" width: 30px; border-left: 0; pointer-events: none; backgroundColor: #fff"
-            placeholder="/"
-            disabled
-          />
-          <a-input v-model="form.subnet.mask" style="width: 75px" :placeholder="$t('mask')"/>
-        </a-input-group>
-      </a-form-model-item>
-    </a-form-model>
+    <a-row type="flex" justify="center">
+      <a-col span="18">
+        <a-form-model ref="form" :rules="rules" :model="form" :label-col="labelCol" :wrapper-col="wrapperCol">
+          <a-form-model-item :label="$t('settings.Scan speed')">
+            <a-select v-model="form.speed">
+                <a-select-option value="-T0">
+                {{$t("settings.speed.Very slow")}}
+                </a-select-option>
+                <a-select-option value="-T1">
+                {{$t("settings.speed.Slow")}}
+                </a-select-option>
+                <a-select-option value="-T2">
+                {{$t("settings.speed.Normal")}}
+                </a-select-option>
+                <a-select-option value="-T3">
+                {{$t("settings.speed.Fast")}}
+                </a-select-option>
+                <a-select-option value="-T4">
+                {{$t("settings.speed.Very fast")}}
+                </a-select-option>
+                <a-select-option value="-T5">
+                {{$t("settings.speed.Agressive")}}
+                </a-select-option>
+            </a-select>
+          </a-form-model-item>
+          <a-form-model-item :label="$t('settings.Common port scan')" >
+            <a-switch v-model="form.port_common_scan" :disabled="form.port_custom_scan"/>
+          </a-form-model-item>
+          <a-form-model-item :label="$t('settings.Custom port scan')">
+            <a-switch v-model="form.port_custom_scan" :disabled="form.port_common_scan"/>
+          </a-form-model-item>
+          <a-form-model-item :label="$t('settings.Custom ports')" v-if="form.port_custom_scan">
+              <a-table :columns="portColumns" :data-source="form.ports" :rowKey="(a) => a.portIndex.toString()">
+                <a-form-model-item :prop="`ports[${index}].port`" :rules="rules.port" slot="portForm" slot-scope="text, record, index">
+                  <a-input :placeholder="$t('settings.Please enter', {lable:$t('port')})" v-model="form.ports[index].port"/>
+                </a-form-model-item>
+                <a-form-model-item :prop="`ports[${index}].discription`" slot="discriptionForm" slot-scope="text, record, index">
+                  <a-input :placeholder="$t('settings.Please enter', {lable:$t('settings.Port usage')})" v-model="form.ports[index].discription"/>
+                </a-form-model-item>
+                  <a-button type="danger"  slot="operation" slot-scope="text, record, index" @click="form.ports.splice(index, 1)">{{$t('Delete')}}</a-button>
+              </a-table>
+              <a-button type="primary" @click="addPort">{{$t('Add')}}</a-button>
+          </a-form-model-item>
+          <a-form-model-item :label="$t('settings.Custom subnet scan')">
+            <a-switch v-model="form.subnet_custom_scan"/>
+          </a-form-model-item>
+          <a-form-model-item :label="$t('settings.Custom subnet')" v-if="form.subnet_custom_scan" prop="subnet">
+            <a-input-group>
+              <a-input v-model="form.subnet.ip" style="width: 130px" :placeholder="$t('ip')"/>
+              <a-input
+                style=" width: 30px; border-left: 0; pointer-events: none; backgroundColor: #fff"
+                placeholder="/"
+                disabled
+              />
+              <a-input v-model="form.subnet.mask" style="width: 75px" :placeholder="$t('mask')"/>
+            </a-input-group>
+          </a-form-model-item>
+        </a-form-model>
+      </a-col>
+    </a-row>
   </div>
 </template>
 <script>
@@ -93,8 +97,8 @@ export default {
         ]
       },
       portIndex: 0,
-      labelCol: { span: 4 },
-      wrapperCol: { span: 14 },
+      labelCol: { span: 6 },
+      wrapperCol: { span: 12 },
       form: {
         speed: '-T2',
         port_custom_scan: false,
