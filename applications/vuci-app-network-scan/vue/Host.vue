@@ -25,8 +25,8 @@
             <slot name="info-aditional">
               <template v-if="host">
                 <div>Vendor: {{host.vendor}}</div>
-                <div :style="{'height':host.ports.length>10?'685px':'auto'}">
-                  <a-table rowKey="port" class="ports" v-if="host.ports" :data-source="host.ports" :columns="pingTableCols">
+                <div :style="{'height':host.ports.length>10?'685px':'auto'}" v-if="host.ports">
+                  <a-table rowKey="port" class="ports" :data-source="host.ports" :columns="pingTableCols">
                       <span slot="status" slot-scope="status">
                       <a-tag
                           :color="status === 'open' ? 'green' : status === 'closed' ? 'red' : 'orange'"
@@ -56,7 +56,7 @@ export default {
         },
         {
           title: 'Used for',
-          dataIndex: 'service'
+          dataIndex:'service'
         },
         {
           title: 'Status',
