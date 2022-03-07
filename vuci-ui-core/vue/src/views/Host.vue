@@ -2,33 +2,39 @@
     <div class="host">
         <div class="logo">
             <slot name="logo">
+              <template v-if="host">
                     <RouterSvg v-if="host.vendor=='Teltonika'"/>
                     <DesktopSvg v-else/>
+              </template>
             </slot>
         </div>
         <div class="info">
             <slot name="info">
-                    <div v-if="host.knownHost">Name: {{host.discription}}</div>
-                    <div>Ip: {{host.ip}}</div>
-                    <div>Mac: {{host.mac}}</div>
-                    <div class="portStatus" v-if="host.ports">
-                        Ports:
-                        <div class="portStatusDot" :style="{background: anyOpenPorts(host.ports)?'green':'red'}"></div>
-                    </div>
+              <template v-if="host">
+                <div v-if="host.knownHost">Name: {{host.discription}}</div>
+                <div>Ip: {{host.ip}}</div>
+                <div>Mac: {{host.mac}}</div>
+                <div class="portStatus" v-if="host.ports">
+                    Ports:
+                    <div class="portStatusDot" :style="{background: anyOpenPorts(host.ports)?'green':'red'}"></div>
+                </div>
+              </template>
             </slot>
         </div>
         <div class="info aditional-info">
             <slot name="info-aditional">
-                    <div>Vendor: {{host.vendor}}</div>
-                    <a-table rowKey="port" class="ports" v-if="host.ports" :data-source="host.ports" :columns="pingTableCols" >
-                        <span slot="status" slot-scope="status">
-                        <a-tag
-                            :color="status === 'open' ? 'green' : status === 'closed' ? 'red' : 'orange'"
-                        >
-                            {{ status.toUpperCase() }}
-                        </a-tag>
-                        </span>
-                    </a-table>
+              <template v-if="host">
+                <div>Vendor: {{host.vendor}}</div>
+                <a-table rowKey="port" class="ports" v-if="host.ports" :data-source="host.ports" :columns="pingTableCols" >
+                    <span slot="status" slot-scope="status">
+                    <a-tag
+                        :color="status === 'open' ? 'green' : status === 'closed' ? 'red' : 'orange'"
+                    >
+                        {{ status.toUpperCase() }}
+                    </a-tag>
+                    </span>
+                </a-table>
+              </template>
             </slot>
         </div>
     </div>
@@ -94,7 +100,7 @@ export default {
     transform: translate(-200px, -75px);
     z-index: 10;
     background: rgba(200,200,200);
-    logo-shadow: 3px 7px 3px 7px rgba(100,100,100,0.5);
+    box-shadow: 3px 7px 3px 7px rgba(100,100,100,0.5);
   }
   .host:hover .logo{
     background: rgba(200,200,200);

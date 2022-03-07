@@ -164,7 +164,7 @@ export default {
     },
     getHostNumFromSubNet (subnet) {
       if (typeof subnet === 'number') return subnet
-      return subnet.hosts.length ?? 0
+      return subnet.hosts.length === null ? 0 : subnet.hosts.length
     },
     getOffsetY (index) {
       return index === 0 ? 300 : -300
