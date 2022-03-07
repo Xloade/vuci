@@ -88,6 +88,7 @@ export default {
     startScan () {
       this.$refs.settings.formRef.validate(valid => {
         if (valid) {
+          this.subnets = []
           if (this.inProgress) {
             this.stopScan()
           }
