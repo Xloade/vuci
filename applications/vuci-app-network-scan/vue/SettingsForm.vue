@@ -26,7 +26,19 @@
                 </a-select-option>
             </a-select>
           </a-form-model-item>
-          <a-form-model-item :label="$t('settings.Common port scan')" >
+          <a-form-model-item :colon="false">
+            <template #label>
+              <div class="label-inner">
+                <a-tooltip class="toolTip">
+                  <template #title>
+                    100 most common ports are scanned.
+                    <a href="https://nmap.org/book/port-scanning.html#most-popular-ports" target="_blank">What Are the Most Popular Ports?</a>
+                  </template>
+                  <question-mark-svg style="fill: grey;"/>
+                </a-tooltip>
+                {{$t('settings.Common port scan')}} :
+              </div>
+            </template>
             <a-switch v-model="form.port_common_scan" :disabled="form.port_custom_scan"/>
           </a-form-model-item>
           <a-form-model-item :label="$t('settings.Custom port scan')">
@@ -64,7 +76,7 @@
   </div>
 </template>
 <script>
-
+import QuestionMarkSvg from './QuestionMarkSvg.vue'
 export default {
   data () {
     return {
@@ -117,6 +129,19 @@ export default {
     addPort () {
       this.form.ports.push({ port: null, discription: '', portIndex: this.portIndex++ })
     }
+  },
+  components: {
+    QuestionMarkSvg
   }
 }
 </script>
+
+<style scoped>
+  .toolTip{
+    margin: auto 10px;
+  }
+  .label-inner{
+    display: inline-flex;
+    align-content: center;
+  }
+</style>
