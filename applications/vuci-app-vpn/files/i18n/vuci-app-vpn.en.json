@@ -1,3 +1,28 @@
 {
-
+    "table": {
+        "status": {
+            "enabled": "Enabled",
+            "disabled": "Disabled"
+        },
+        "button": {
+            "enable": "Enable",
+            "disable": "Disable",
+            "delete": "Delete",
+            "edit": "Edit"
+        }
+    },
+    "app": {
+        "button": {
+            "create": "Create"
+        }
+    },
+    "editForm": {
+        "isActive": "Activated"
+    },
+    "addForm": {
+        "name": "Name",
+        "type": "Type",
+        "client": "Client",
+        "server": "Server"
+    }
 }

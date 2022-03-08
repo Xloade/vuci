@@ -9,7 +9,7 @@
       @cancel="handleCancel"
     >
       <a-form-model ref="form" :rules="rules" :model="form" :label-col="labelCol" :wrapper-col="wrapperCol">
-        <a-form-model-item :label="$t('form.isActive')">
+        <a-form-model-item :label="$t('editForm.isActive')">
           <a-switch v-model="form.isActive"/>
         </a-form-model-item>
       </a-form-model>

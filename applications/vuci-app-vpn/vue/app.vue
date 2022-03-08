@@ -1,17 +1,20 @@
 <template>
   <div>
-    <add-edit-form-modal ref="formModal"/>
-    <a-button type="primary" @click="$refs.formModal.showModal()">
-      Create
-    </a-button>
+    <vpn-table ref="table"/>
+    <add-form @created="$refs.table.getVPNs()"/>
+    <edit-form-modal @edit="(name) => $refs.formModal.showModal(name)" ref="formModal"/>
   </div>
 </template>
 
 <script>
-import AddEditFormModal from './EditFormModal.vue'
+import EditFormModal from './EditFormModal.vue'
+import AddForm from './AddForm.vue'
+import VpnTable from './VpnTable.vue'
 export default {
   components: {
-    AddEditFormModal
+    EditFormModal,
+    AddForm,
+    VpnTable
   }
 }
 </script>
