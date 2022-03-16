@@ -17,7 +17,27 @@
         }
     },
     "editForm": {
-        "isActive": "Activated"
+        "Select File": "Select File",
+        "isEnabled": "Enabled",
+        "dh": "dh",
+        "ca": "ca",
+        "cert": "cert",
+        "key": "key",
+        "auth": "Auth method",
+        "skey": "Static key",
+        "tls": "TLS",
+        "server": {
+            "ip": "Server ip",
+            "mask": "Server mask"
+        },
+        "remote": "remote",
+        "network": {
+            "ip": "Network ip",
+            "mask": "Network mask"
+        },
+        "localIp": "Local ip",
+        "remoteIp": "Remote ip",
+        "secret": "Secret key"
     },
     "addForm": {
         "name": "Name",

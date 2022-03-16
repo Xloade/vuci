@@ -64,19 +64,28 @@ export default {
       })
     },
     disable (name) {
-      this.$rpc.call('vpn', 'disable', { name: name }).then((r) => {
-        this.getVPNs()
-      })
+      this.$rpc.call('vpn', 'disable', { name: name })
+        .then(this.$uci.apply())
+        .then(this.$system.initRestart('openvpn'))
+        .then((r) => {
+          this.getVPNs()
+        })
     },
     enable (name) {
-      this.$rpc.call('vpn', 'enable', { name: name }).then((r) => {
-        this.getVPNs()
-      })
+      this.$rpc.call('vpn', 'enable', { name: name })
+        .then(this.$uci.apply())
+        .then(this.$system.initRestart('openvpn'))
+        .then((r) => {
+          this.getVPNs()
+        })
     },
     deleteVpn (name) {
-      this.$rpc.call('vpn', 'delete', { name: name }).then((r) => {
-        this.getVPNs()
-      })
+      this.$rpc.call('vpn', 'delete', { name: name })
+        .then(this.$uci.apply())
+        .then(this.$system.initRestart('openvpn'))
+        .then((r) => {
+          this.getVPNs()
+        })
     }
 
   },

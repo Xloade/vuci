@@ -42,10 +42,13 @@ export default {
     add () {
       this.$refs.form.validate(valid => {
         if (valid) {
-          this.$rpc.call('vpn', 'addVpn', { form: this.form }).then((r) => {
-            this.$refs.form.resetFields()
-            this.$emit('created')
-          })
+          this.$rpc.call('vpn', 'addVpn', { form: this.form })
+            .then(this.$uci.apply())
+            .then(this.$system.initRestart('openvpn'))
+            .then((r) => {
+              this.$refs.form.resetFields()
+              this.$emit('created')
+            })
         }
       })
     }
