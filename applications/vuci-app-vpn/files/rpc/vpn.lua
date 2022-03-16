@@ -23,8 +23,7 @@ function Vpn.addVpn (props)
   c:set("openvpn", form.name, "cipher", "BF-CBC")
 
   if form.type == "client" then
-    c:set("openvpn", form.name, "_tls_auth", "none")
-    c:set("openvpn", form.name, "status", "/tmp/openvpn-status_"..form.name)
+    c:set("openvpn", form.name, "status", "/tmp/openvpn-status_"..form.name..".log")
   end
 
   c:commit("openvpn")
@@ -48,6 +47,18 @@ function Vpn.getVpns(props)
   return props
 end
 
+function Vpn.getVpn(props)
+  local c = Uci.cursor()
+  local vpn = c:get_all("openvpn", props.name)
+  vpn.enable = vpn.enable == "1"
+  vpn.ca = vpn.ca:match(".+%/cbid.openvpn."..props.name..".(.+)")
+  vpn.cert = vpn.cert:match(".+%/cbid.openvpn."..props.name..".(.+)")
+  vpn.key = vpn.key:match(".+%/cbid.openvpn."..props.name..".(.+)")
+  vpn.dh = vpn.dh:match(".+%/cbid.openvpn."..props.name..".(.+)")
+  props.vpn = vpn
+  return props
+end
+
 function Vpn.enable(props)
   local c = Uci.cursor()
   c:set("openvpn", props.name, "enable", "1")
@@ -63,6 +74,48 @@ end
 function Vpn.delete(props)
   local c = Uci.cursor()
   c:delete("openvpn", props.name)
+  c:commit("openvpn")
+end
+
+function Vpn.edit(props)
+  local form = props.form
+  local c = Uci.cursor()
+  local type = c:get("openvpn", form.name, "type")
+
+  c:set("openvpn", form.name, "enable", form.isEnabled and '1' or '0')
+  c:set("openvpn", form.name, "_auth", form.auth)
+  if(form.auth == "skey") then
+      
+  else
+    c:set("openvpn", form.name, "_tls_auth", "none")
+    c:set("openvpn", form.name, "_tls_cipher", "all")
+    c:set("openvpn", form.name, "tls_server", "1")
+    c:set("openvpn", form.name, "auth", "sha1")
+    c:set("openvpn", form.name, "client_config_dir", "/etc/openvpn/cdd")
+    c:set("openvpn", form.name, "upload_files", "0")
+    c:set("openvpn", form.name, "ca", "/etc/vuci-uploads/cbid.openvpn."..form.name..".ca.cert.pem")
+    c:set("openvpn", form.name, "cert", "/etc/vuci-uploads/cbid.openvpn."..form.name.."."..form.type..".cert.pem")
+    c:set("openvpn", form.name, "key", "/etc/vuci-uploads/cbid.openvpn."..form.name.."."..form.type..".key.pem")
+    c:set("openvpn", form.name, "push", {"route "..form.route.ip.." "..form.route.mask})
+    c:set("openvpn", form.name, "server_ip", form.server.ip)
+    c:set("openvpn", form.name, "server_netmask", form.server.mask)
+  end
+  if(type == "client") then
+    if(form.auth == "skey") then
+
+    else
+      c:set("openvpn", form.name, "local_ip", form.server.localIp)
+      c:set("openvpn", form.name, "remote_ip", form.server.remoteIp)
+      c:set("openvpn", form.name, "network_ip", form.network.ip)
+      c:set("openvpn", form.name, "network_mask", form.network.mask)
+    end
+  else
+    if(form.auth == "skey") then
+
+    else
+      c:set("openvpn", form.name, "dh", "/etc/vuci-uploads/cbid.openvpn."..form.name..".dh.pem")
+    end
+  end
   c:commit("openvpn")
 end
 

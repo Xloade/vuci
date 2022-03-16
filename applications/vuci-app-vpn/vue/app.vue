@@ -1,8 +1,8 @@
 <template>
   <div>
-    <vpn-table ref="table"/>
+    <vpn-table ref="table" @edit="(name) => $refs.formModal.showModal(name)"/>
     <add-form @created="$refs.table.getVPNs()"/>
-    <edit-form-modal @edit="(name) => $refs.formModal.showModal(name)" ref="formModal"/>
+    <edit-form-modal ref="formModal" @edited="$refs.table.getVPNs()"/>
   </div>
 </template>
 
