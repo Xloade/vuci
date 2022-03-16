@@ -1,5 +1,8 @@
 <template>
   <a-table :columns="VPNColumns" :data-source="VPNs" :rowKey="(a) => a._name">
+    <template slot="name" slot-scope="name, record">
+      {{name}}_{{record.type}}
+    </template>
     <template slot="status" slot-scope="text">
       {{text == "Enabled" ? $t('table.status.enabled') : $t('table.status.disabled')}}
     </template>
@@ -39,7 +42,8 @@ export default {
       VPNColumns: [
         {
           dataIndex: '_name',
-          title: this.$t('name')
+          title: this.$t('name'),
+          scopedSlots: { customRender: 'name' }
         },
         {
           dataIndex: 'status',
