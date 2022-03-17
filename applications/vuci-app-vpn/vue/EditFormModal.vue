@@ -128,7 +128,7 @@ export default {
       wrapperCol: { span: 12 },
       rules: {
       },
-      form: {},
+      form: JSON.parse(JSON.stringify(formStart)),
       formStart
     }
   },
