@@ -47,16 +47,19 @@ export default {
         {
           dataIndex: '_name',
           title: this.$t('name'),
-          scopedSlots: { customRender: 'name' }
+          scopedSlots: { customRender: 'name' },
+          width: '33%'
         },
         {
           dataIndex: 'status',
           title: this.$t('status'),
-          scopedSlots: { customRender: 'status' }
+          scopedSlots: { customRender: 'status' },
+          width: '33%'
         },
         {
           dataIndex: 'operation',
-          scopedSlots: { customRender: 'operation' }
+          scopedSlots: { customRender: 'operation' },
+          width: '33%'
         }
       ],
       refresh: null
