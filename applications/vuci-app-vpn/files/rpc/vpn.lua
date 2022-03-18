@@ -1,6 +1,7 @@
 #! /usr/bin/env lua
 
 Uci = require 'uci'
+Json = require 'vuci.json'
 
 Vpn = {}
 
@@ -18,7 +19,7 @@ function RunShellCommand( shellCommand, resultHandler )
     end
 
     for line in io.lines() do
-        if line:match( "%w" ) then
+        if line:match( "^.+$" ) then
             resultHandler = resultHandler( line )
 
             if not resultHandler then break end
@@ -29,8 +30,29 @@ function RunShellCommand( shellCommand, resultHandler )
     os.remove( tempFile )
 end
 
-function GetJsonFromFile (file)
-  
+function TryToGetStatus(json, name)
+    return json["openvpn"]["instances"][name]["running"]
+end
+
+function GetStatus(json, name)
+    local status, message = pcall(TryToGetStatus,json,name)
+    if status then
+        return message
+    end
+    return false
+end
+
+function GetVpnJson ()
+    local shellComand = "ubus call service list '{\"name\":\"openvpn\"}'"
+    local json = ""
+    local handler
+    handler = function (line)
+        json = json..line
+        return handler
+    end
+    RunShellCommand(shellComand, handler)
+    JsonObj =  Json.decode(json)
+    return JsonObj
 end
 
 function GetReadBites(name)
@@ -86,12 +108,16 @@ end
 
 function Vpn.getVpns(props)
   local vpns = GetConfUnamed("openvpn", "openvpn")
+  local openVPNReport = GetVpnJson()
   for index, vpn in ipairs(vpns) do
+    local reportedStatus = GetStatus(openVPNReport, vpn._name)
+    vpn.enable = vpn.enable == "1"
+    local fullyEnabled = vpn.enable and reportedStatus or false
     if vpn.type=="client" then
       local isConnected = GetReadBites(vpn._name) > 0
-      vpns[index].status = vpn.enable == "1" and (isConnected and "connected" or "disconnected") or "disabled"
+      vpns[index].status = fullyEnabled and (isConnected and "connected" or "disconnected") or "disabled"
     else 
-      vpns[index].status = vpn.enable == "1" and "enabled" or "disabled"
+      vpns[index].status = fullyEnabled and "enabled" or "disabled"
     end
   end
   props.vpns = vpns
@@ -138,7 +164,58 @@ end
 
 function Vpn.delete(props)
   local c = Uci.cursor()
+  local auth = c:get("openvpn", props.name, "_auth")
+  DeleteOldFiles(props.name, auth)
   c:delete("openvpn", props.name)
+  c:commit("openvpn")
+end
+
+function DeleteOldFiles (name, auth)
+  if auth == "skey" then
+    os.execute( "rm /etc/vuci-uploads/cbid.openvpn."..name..".secretstatic.key" )
+  elseif auth == "tls" then
+    os.execute( "rm /etc/vuci-uploads/cbid.openvpn."..name..".ca.cert.pem" )
+    os.execute( "rm /etc/vuci-uploads/cbid.openvpn."..name.."*.cert.pem" )
+    os.execute( "rm /etc/vuci-uploads/cbid.openvpn."..name.."*.key.pem" )
+    os.execute( "rm /etc/vuci-uploads/cbid.openvpn."..name..".dh.pem" )
+  end
+end
+
+
+function DeleteOldSettings(name, auth, type)
+  local c = Uci.cursor()
+  if(auth == "skey") then
+    c:delete("openvpn", name, "secret")
+    c:delete("openvpn", name, "local_ip")
+    c:delete("openvpn", name, "remote_ip")
+  elseif(auth == "tls") then
+    c:delete("openvpn", name, "_tls_auth")
+    c:delete("openvpn", name, "_tls_cipher")
+    c:delete("openvpn", name, "auth")
+    c:delete("openvpn", name, "upload_files")
+    c:delete("openvpn", name, "ca")
+    c:delete("openvpn", name, "cert")
+    c:delete("openvpn", name, "key")
+  end
+  if(type == "client") then
+    if(auth == "skey") then
+      
+    elseif(auth == "tls") then
+      c:delete("openvpn", name, "tls_client")
+      c:delete("openvpn", name, "client")
+    end
+  elseif(type == "server") then
+    if(auth == "skey") then
+
+    elseif(auth == "tls") then
+      c:delete("openvpn", name, "dh")
+      c:delete("openvpn", name, "server_ip")
+      c:delete("openvpn", name, "server_netmask")
+      c:delete("openvpn", name, "tls_server")
+      c:delete("openvpn", name, "client_config_dir")
+      c:delete("openvpn", name, "push")
+    end
+  end
   c:commit("openvpn")
 end
 
@@ -146,6 +223,13 @@ function Vpn.edit(props)
   local form = props.form
   local c = Uci.cursor()
   local type = c:get("openvpn", form.name, "type")
+
+  local oldAuth = c:get("openvpn", form.name, "_auth")
+
+  if oldAuth ~= form.auth then
+    DeleteOldFiles(form.name, oldAuth)
+    DeleteOldSettings(form.name, oldAuth, type)
+  end
 
   c:set("openvpn", form.name, "enable", form.isEnabled and '1' or '0')
   c:set("openvpn", form.name, "_auth", form.auth)

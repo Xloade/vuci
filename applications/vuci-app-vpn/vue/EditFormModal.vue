@@ -34,10 +34,10 @@
           </a-form-model-item>
         </div>
         <div v-if="form.auth == 'skey'">
-          <a-form-model-item :label="$t('editForm.localIp')" prop="localIp" :rules="rules.ip">
+          <a-form-model-item :label="$t('editForm.localIp')" prop="localIp" :rules="[...rules.required,...rules.ip]">
             <a-input v-model="form.localIp" style="width: 250px"/>
           </a-form-model-item>
-          <a-form-model-item :label="$t('editForm.remoteIp')" prop="remoteIp" :rules="rules.ip">
+          <a-form-model-item :label="$t('editForm.remoteIp')" prop="remoteIp" :rules="[...rules.required,...rules.ip]">
             <a-input v-model="form.remoteIp" style="width: 250px"/>
           </a-form-model-item>
         </div>
@@ -216,6 +216,11 @@ export default {
       })
     },
     handleCancel (e) {
+      this.form.ca = []
+      this.form.cert = []
+      this.form.key = []
+      this.form.dh = []
+      this.form.secret = []
       this.visible = false
       this.$refs.form.resetFields()
     },
