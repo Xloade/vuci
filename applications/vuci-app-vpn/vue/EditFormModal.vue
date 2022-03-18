@@ -15,7 +15,7 @@
         <a-form-model-item :label="$t('editForm.isEnabled')">
           <a-switch v-model="form.isEnabled"/>
         </a-form-model-item>
-        <a-form-model-item :label="$t('editForm.auth')" prop="auth">
+        <a-form-model-item :label="$t('editForm.auth')" prop="auth" :rules="rules.required">
           <a-select v-model="form.auth" style="width: 250px">
             <a-select-option value="skey">
               {{$t("editForm.skey")}}
@@ -29,7 +29,7 @@
           <a-input v-model="form.port" style="width: 250px"/>
         </a-form-model-item>
         <div v-if="form.type == 'client'" >
-          <a-form-model-item :label="$t('editForm.remote')" prop="remote" :rules="[...rules.ip, ...rules.ipNotEqualToLan]">
+          <a-form-model-item :label="$t('editForm.remote')" prop="remote" :rules="[...rules.required,...rules.ip, ...rules.ipNotEqualToLan]">
             <a-input v-model="form.remote" style="width: 250px"/>
           </a-form-model-item>
         </div>
@@ -50,10 +50,10 @@
           </a-form-model-item>
         </div>
         <div v-if="form.type == 'server' && form.auth == 'tls'" >
-          <a-form-model-item :label="$t('editForm.server.ip')"  prop="server.ip" :rules="rules.mask">
+          <a-form-model-item :label="$t('editForm.server.ip')"  prop="server.ip" :rules="[...rules.required,...rules.ip]">
             <a-input v-model="form.server.ip" style="width: 250px"/>
           </a-form-model-item>
-          <a-form-model-item :label="$t('editForm.server.mask')"  prop="server.mask" :rules="rules.mask">
+          <a-form-model-item :label="$t('editForm.server.mask')"  prop="server.mask" :rules="[...rules.required,...rules.mask]">
             <a-input v-model="form.server.mask" style="width: 250px"/>
           </a-form-model-item>
         </div>
@@ -134,10 +134,14 @@ export default {
       wrapperCol: { span: 12 },
       form,
       rules: {
+        required: [
+          { required: true, message: this.$t('invalid.required'), trigger: 'blur' }
+        ],
         ipEqualToMask: [
           {
             validator: (rule, value, callback) => {
-              if (!IpValidator.isEqualMask(value, form.network.mask)) callback(new Error(this.$t('invalid.ip/mask missmatch')))
+              if (value === '' || value === undefined) callback()
+              else if (!IpValidator.isEqualMask(value, form.network.mask)) callback(new Error(this.$t('invalid.ip/mask missmatch')))
               else callback()
             },
             trigger: 'blur'
@@ -153,30 +157,30 @@ export default {
           }
         ],
         ip: [
-          { required: true, message: this.$t('invalid.required'), trigger: 'blur' },
           {
             validator: (rule, value, callback) => {
-              if (!VuciValidator.ip4addr(value)) callback(new Error(this.$t('invalid.ip')))
+              if (value === '' || value === undefined) callback()
+              else if (!VuciValidator.ip4addr(value)) callback(new Error(this.$t('invalid.ip')))
               else callback()
             },
             trigger: 'blur'
           }
         ],
         mask: [
-          { required: true, message: this.$t('invalid.required'), trigger: 'blur' },
           {
             validator: (rule, value, callback) => {
-              if (!VuciValidator.netmask4(value)) callback(new Error(this.$t('invalid.mask')))
+              if (value === '' || value === undefined) callback()
+              else if (!VuciValidator.netmask4(value)) callback(new Error(this.$t('invalid.mask')))
               else callback()
             },
             trigger: 'blur'
           }
         ],
         port: [
-          { required: true, message: this.$t('invalid.required'), trigger: 'blur' },
           {
             validator: (rule, value, callback) => {
-              if (!VuciValidator.port(value)) callback(new Error(this.$t('invalid.port')))
+              if (value === '' || value === undefined) callback()
+              else if (!VuciValidator.port(value)) callback(new Error(this.$t('invalid.port')))
               else callback()
             },
             trigger: 'blur'
@@ -184,9 +188,6 @@ export default {
         ],
         fileUpload: [
           { required: true, message: this.$t('invalid.file required'), trigger: 'change' }
-        ],
-        auth: [
-          { required: true, message: this.$t('invalid.required'), trigger: 'blur' }
         ]
       }
     }
@@ -200,6 +201,9 @@ export default {
     handleCreate (e) {
       this.$refs.form.validate(valid => {
         if (valid) {
+          // prevent undefined as cleared forms can have it and we sometimes want send empty network settings
+          this.form.network.ip = this.form.network.ip || ''
+          this.form.network.mask = this.form.network.mask || ''
           this.$rpc.call('vpn', 'edit', { form: this.form })
             .then(this.$uci.apply())
             .then(this.$system.initRestart('openvpn'))

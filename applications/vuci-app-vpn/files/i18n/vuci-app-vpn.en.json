@@ -56,6 +56,7 @@
         "ip": "IP adress is invalid",
         "port": "Port is invalid",
         "file required": "File is required",
-        "ip/mask missmatch": "IP and mask are missmached"
+        "ip/mask missmatch": "IP and mask are missmached",
+        "mask": "Mask is invalid"
     }
 }
