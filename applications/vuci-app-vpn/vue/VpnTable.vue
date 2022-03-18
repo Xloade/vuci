@@ -85,12 +85,14 @@ export default {
         })
     },
     deleteVpn (name) {
-      this.$rpc.call('vpn', 'delete', { name: name })
-        .then(this.$uci.apply())
-        .then(this.$system.initRestart('openvpn'))
-        .then((r) => {
-          this.getVPNs()
-        })
+      if (confirm(this.$t('table.confirm delete'))) {
+        this.$rpc.call('vpn', 'delete', { name: name })
+          .then(this.$uci.apply())
+          .then(this.$system.initRestart('openvpn'))
+          .then((r) => {
+            this.getVPNs()
+          })
+      }
     }
 
   },

@@ -36,7 +36,15 @@ export default {
       },
       rules: {
         name: [
-          { required: true, message: this.$t('invalid.required'), trigger: 'blur' }
+          { required: true, message: this.$t('invalid.required'), trigger: 'blur' },
+          {
+            validator: (rule, value, callback) => {
+              // router can have only one server rule
+              if (this.currentVPNs.find(element => element._name === value)) callback(new Error(this.$t('invalid.dublicate name')))
+              else callback()
+            },
+            trigger: 'blur'
+          }
         ],
         type: [
           { required: true, message: this.$t('invalid.required'), trigger: 'blur' },

@@ -208,7 +208,7 @@ export default {
             .then(this.$uci.apply())
             .then(this.$system.initRestart('openvpn'))
             .then((r) => {
-              this.$refs.form.resetFields()
+              this.resetFields()
               this.$emit('edited')
               this.visible = false
             })
@@ -216,13 +216,16 @@ export default {
       })
     },
     handleCancel (e) {
+      this.visible = false
+      this.resetFields()
+    },
+    resetFields () {
+      this.$refs.form.resetFields()
       this.form.ca = []
       this.form.cert = []
       this.form.key = []
       this.form.dh = []
       this.form.secret = []
-      this.visible = false
-      this.$refs.form.resetFields()
     },
     getVPN () {
       this.$rpc.call('vpn', 'getVpn', { name: this.form.name }).then((r) => {
