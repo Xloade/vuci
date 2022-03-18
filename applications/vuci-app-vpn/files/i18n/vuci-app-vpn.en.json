@@ -25,7 +25,7 @@
         "certs":{
             "server": "Server",
             "client": "Client",
-            "dh": "Diffie Hellman params (dh)",
+            "dh": "D. Hellman params (dh)",
             "ca": "Certificate authority (ca)",
             "cert": "certificate (cert)",
             "key": "key (key)"
