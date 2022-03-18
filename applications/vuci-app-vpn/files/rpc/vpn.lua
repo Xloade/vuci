@@ -88,6 +88,9 @@ function Vpn.addVpn (props)
   c:set("openvpn", form.name, "proto", "udp")
   c:set("openvpn", form.name, "cipher", "BF-CBC")
 
+  -- default auth
+  c:set("openvpn", form.name, "_auth", "tls")
+
   if form.type == "client" then
     c:set("openvpn", form.name, "status", "/tmp/openvpn-status_"..form.name..".log")
     c:set("openvpn", form.name, "nobind", "1")
@@ -112,12 +115,25 @@ function Vpn.getVpns(props)
   for index, vpn in ipairs(vpns) do
     local reportedStatus = GetStatus(openVPNReport, vpn._name)
     vpn.enable = vpn.enable == "1"
-    local fullyEnabled = vpn.enable and reportedStatus or false
     if vpn.type=="client" then
       local isConnected = GetReadBites(vpn._name) > 0
-      vpns[index].status = fullyEnabled and (isConnected and "connected" or "disconnected") or "disabled"
+      if not vpn.enable then
+        vpns[index].status = "disabled"
+      elseif not reportedStatus then
+        vpns[index].status = "notRunning"
+      elseif not isConnected then
+        vpns[index].status = "disconnected"
+      else
+        vpns[index].status = "connected"
+      end
     else 
-      vpns[index].status = fullyEnabled and "enabled" or "disabled"
+      if not vpn.enable then
+        vpns[index].status = "disabled"
+      elseif not reportedStatus then
+        vpns[index].status = "notRunning"
+      else
+        vpns[index].status = "running"
+      end
     end
   end
   props.vpns = vpns

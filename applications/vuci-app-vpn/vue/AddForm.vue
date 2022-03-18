@@ -32,7 +32,7 @@ export default {
     return {
       form: {
         name: '',
-        type: ''
+        type: 'client'
       },
       rules: {
         name: [
@@ -68,8 +68,8 @@ export default {
             .then(this.$uci.apply())
             .then(this.$system.initRestart('openvpn'))
             .then((r) => {
+              this.$emit('created', this.form.name)
               this.$refs.form.resetFields()
-              this.$emit('created')
             })
         }
       })

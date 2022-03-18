@@ -29,7 +29,7 @@
           <a-input v-model="form.port" style="width: 250px"/>
         </a-form-model-item>
         <div v-if="form.type == 'client'" >
-          <a-form-model-item :label="$t('editForm.remote')" prop="remote" :rules="[...rules.required,...rules.ip]">
+          <a-form-model-item :label="$t('editForm.remote')" prop="remote" :rules="[...rules.required,...rules.ip, ...rules.ipNotEqualToLan]">
             <a-input v-model="form.remote" style="width: 250px"/>
           </a-form-model-item>
         </div>

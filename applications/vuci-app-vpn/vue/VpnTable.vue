@@ -5,7 +5,13 @@
         {{name}}_{{record.type}}
       </template>
       <template slot="status" slot-scope="text">
-        {{$t('table.status.'+text)}}
+        <span>
+          <a-tag
+              :color="statusColor(text)"
+          >
+            {{$t('table.status.'+text)}}
+          </a-tag>
+        </span>
       </template>
       <template slot="operation" slot-scope="text, record, index">
         <div class="operations">
@@ -34,7 +40,7 @@
         </div>
       </template>
     </a-table>
-    <add-form @created="getVPNs()" :currentVPNs="VPNs"/>
+    <add-form @created="(name)=>{getVPNs(); $emit('edit', name)}" :currentVPNs="VPNs"/>
   </div>
 </template>
 <script>
@@ -95,6 +101,22 @@ export default {
           .then((r) => {
             this.getVPNs()
           })
+      }
+    },
+    statusColor (status) {
+      switch (status) {
+        case 'connected':
+          return 'green'
+        case 'disconnected':
+          return 'orange'
+        case 'disabled':
+          return 'red'
+        case 'running':
+          return 'green'
+        case 'notRunning':
+          return 'orange'
+        default:
+          return 'red'
       }
     }
 

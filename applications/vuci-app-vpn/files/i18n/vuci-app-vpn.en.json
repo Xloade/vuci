@@ -4,7 +4,9 @@
             "enabled": "Enabled",
             "disabled": "Disabled",
             "connected": "Connected",
-            "disconnected": "Disconnected"
+            "disconnected": "Disconnected",
+            "running": "Running",
+            "notRunning": "Not running"
         },
         "button": {
             "enable": "Enable",
@@ -34,14 +36,14 @@
         "skey": "Static key",
         "tls": "TLS",
         "server": {
-            "ip": "Server ip",
-            "mask": "Server mask"
+            "ip": "Virtual network IP adress",
+            "mask": "Virtual network netmask"
         },
         "remote": "Remote host",
         "port": "Port",
         "network": {
             "ip": "Remote network ip",
-            "mask": "Remote network mask"
+            "mask": "Remote network netmask"
         },
         "localIp": "Local tunnel ip",
         "remoteIp": "Remote tunnel ip",
@@ -59,7 +61,7 @@
         "ip": "IP adress is invalid",
         "port": "Port is invalid",
         "file required": "File is required",
-        "ip/mask missmatch": "IP and mask are missmached",
+        "ip/mask missmatch": "IP and netmask are missmached",
         "mask": "Mask is invalid",
         "lanMatch": "Remote can't match LAN ip",
         "dublicate name": "Dublicate name"
