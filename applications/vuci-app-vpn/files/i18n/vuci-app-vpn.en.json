@@ -19,10 +19,14 @@
     "editForm": {
         "Select File": "Select File",
         "isEnabled": "Enabled",
-        "dh": "dh",
-        "ca": "ca",
-        "cert": "cert",
-        "key": "key",
+        "certs":{
+            "server": "Server",
+            "client": "Client",
+            "dh": "Diffie Hellman params (dh)",
+            "ca": "Certificate authority (ca)",
+            "cert": "certificate (cert)",
+            "key": "key (key)"
+        },
         "auth": "Auth method",
         "skey": "Static key",
         "tls": "TLS",
@@ -30,13 +34,14 @@
             "ip": "Server ip",
             "mask": "Server mask"
         },
-        "remote": "remote",
+        "remote": "Remote host",
+        "port": "Port",
         "network": {
-            "ip": "Network ip",
-            "mask": "Network mask"
+            "ip": "Remote network ip",
+            "mask": "Remote network mask"
         },
-        "localIp": "Local ip",
-        "remoteIp": "Remote ip",
+        "localIp": "Local tunnel ip",
+        "remoteIp": "Remote tunnel ip",
         "secret": "Secret key"
     },
     "addForm": {
@@ -44,5 +49,13 @@
         "type": "Type",
         "client": "Client",
         "server": "Server"
+    },
+    "invalid":{
+        "required": "Field is required",
+        "too many servers": "Only one server is allowed",
+        "ip": "IP adress is invalid",
+        "port": "Port is invalid",
+        "file required": "File is required",
+        "ip/mask missmatch": "IP and mask are missmached"
     }
 }

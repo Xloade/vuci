@@ -14,7 +14,6 @@ function Vpn.addVpn (props)
   c:set("openvpn", form.name, "keepalive", "10 120")
   c:set("openvpn", form.name, "data_chipers", {"BF-CBC"})
   c:set("openvpn", form.name, "persist_key", "1")
-  c:set("openvpn", form.name, "port", "1194")
   c:set("openvpn", form.name, "persist_tun", "1")
   local dev = "tun_"..string.sub(form.type, 1, 1).."_"..form.name
   c:set("openvpn", form.name, "dev", dev)
@@ -70,8 +69,6 @@ function Vpn.getVpn(props)
   elseif(vpn._auth == "tls") then
     
   end
-  
-  
 
   props.vpn = vpn
   return props
@@ -102,6 +99,7 @@ function Vpn.edit(props)
 
   c:set("openvpn", form.name, "enable", form.isEnabled and '1' or '0')
   c:set("openvpn", form.name, "_auth", form.auth)
+  c:set("openvpn", form.name, "port", form.port)
   if(not (form.auth == "tls" and type == "server")) then
     c:set("openvpn", form.name, "network_ip", form.network.ip)
     c:set("openvpn", form.name, "network_mask", form.network.mask)

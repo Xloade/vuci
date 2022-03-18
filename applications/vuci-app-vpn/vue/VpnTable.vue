@@ -1,40 +1,44 @@
 <template>
-  <a-table :columns="VPNColumns" :data-source="VPNs" :rowKey="(a) => a._name">
-    <template slot="name" slot-scope="name, record">
-      {{name}}_{{record.type}}
-    </template>
-    <template slot="status" slot-scope="text">
-      {{text == "Enabled" ? $t('table.status.enabled') : $t('table.status.disabled')}}
-    </template>
-    <template slot="operation" slot-scope="text, record, index">
-      <div class="operations">
-        <a-button type="primary"
-          @click="$emit('edit', VPNs[index]._name)"
-        >
-          {{$t('table.button.edit')}}
-        </a-button>
-        <a-button
-          v-if="VPNs[index].enable == '1'"
-          @click="disable(VPNs[index]._name)"
-        >
-          {{$t('table.button.disable')}}
-        </a-button>
-        <a-button v-else
-          @click="enable(VPNs[index]._name)"
-        >
-          {{$t('table.button.enable')}}
-        </a-button>
-        <a-button
-          type="danger"
-          @click="deleteVpn(VPNs[index]._name)"
-        >
-          {{$t('table.button.delete')}}
-        </a-button>
-      </div>
-    </template>
-  </a-table>
+  <div class="">
+    <a-table :columns="VPNColumns" :data-source="VPNs" :rowKey="(a) => a._name">
+      <template slot="name" slot-scope="name, record">
+        {{name}}_{{record.type}}
+      </template>
+      <template slot="status" slot-scope="text">
+        {{text == "Enabled" ? $t('table.status.enabled') : $t('table.status.disabled')}}
+      </template>
+      <template slot="operation" slot-scope="text, record, index">
+        <div class="operations">
+          <a-button type="primary"
+            @click="$emit('edit', VPNs[index]._name)"
+          >
+            {{$t('table.button.edit')}}
+          </a-button>
+          <a-button
+            v-if="VPNs[index].enable == '1'"
+            @click="disable(VPNs[index]._name)"
+          >
+            {{$t('table.button.disable')}}
+          </a-button>
+          <a-button v-else
+            @click="enable(VPNs[index]._name)"
+          >
+            {{$t('table.button.enable')}}
+          </a-button>
+          <a-button
+            type="danger"
+            @click="deleteVpn(VPNs[index]._name)"
+          >
+            {{$t('table.button.delete')}}
+          </a-button>
+        </div>
+      </template>
+    </a-table>
+    <add-form @created="getVPNs()" :currentVPNs="VPNs"/>
+  </div>
 </template>
 <script>
+import AddForm from './AddForm.vue'
 export default {
   data () {
     return {
@@ -91,6 +95,9 @@ export default {
   },
   mounted () {
     this.getVPNs()
+  },
+  components: {
+    AddForm
   }
 }
 </script>

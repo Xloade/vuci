@@ -27,6 +27,7 @@
 
 <script>
 export default {
+  props: ['currentVPNs'],
   data () {
     return {
       form: {
@@ -34,7 +35,20 @@ export default {
         type: ''
       },
       rules: {
-
+        name: [
+          { required: true, message: this.$t('invalid.required'), trigger: 'blur' }
+        ],
+        type: [
+          { required: true, message: this.$t('invalid.required'), trigger: 'blur' },
+          {
+            validator: (rule, value, callback) => {
+              // router can have only one server rule
+              if (value === 'server' && this.currentVPNs.find(element => element.type === 'server')) callback(new Error(this.$t('invalid.too many servers')))
+              else callback()
+            },
+            trigger: 'blur'
+          }
+        ]
       }
     }
   },
