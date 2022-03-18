@@ -2,7 +2,9 @@
     "table": {
         "status": {
             "enabled": "Enabled",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "connected": "Connected",
+            "disconnected": "Disconnected"
         },
         "button": {
             "enable": "Enable",
@@ -57,6 +59,7 @@
         "port": "Port is invalid",
         "file required": "File is required",
         "ip/mask missmatch": "IP and mask are missmached",
-        "mask": "Mask is invalid"
+        "mask": "Mask is invalid",
+        "lanMatch": "Remote can't match LAN ip"
     }
 }

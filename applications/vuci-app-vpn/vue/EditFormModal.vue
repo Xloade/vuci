@@ -29,7 +29,7 @@
           <a-input v-model="form.port" style="width: 250px"/>
         </a-form-model-item>
         <div v-if="form.type == 'client'" >
-          <a-form-model-item :label="$t('editForm.remote')" prop="remote" :rules="[...rules.required,...rules.ip, ...rules.ipNotEqualToLan]">
+          <a-form-model-item :label="$t('editForm.remote')" prop="remote" :rules="[...rules.required,...rules.ip]">
             <a-input v-model="form.remote" style="width: 250px"/>
           </a-form-model-item>
         </div>
@@ -150,7 +150,7 @@ export default {
         ipNotEqualToLan: [
           {
             validator: (rule, value, callback) => {
-              if (value === this.lan) callback(new Error(this.$t('invalid.ip/mask missmatch')))
+              if (value === this.lan) callback(new Error(this.$t('invalid.lanMatch')))
               else callback()
             },
             trigger: 'blur'

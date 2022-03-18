@@ -4,6 +4,51 @@ Uci = require 'uci'
 
 Vpn = {}
 
+function RunShellCommand( shellCommand, resultHandler )
+
+    local tempFile = "/tmp/lua-shell-cmd"
+
+    if not os.execute( shellCommand.." > "..tempFile ) then
+        error( "Execution of OS command '"..shellCommand.."' failed!" )
+    end
+
+    if not io.input( tempFile ) then
+        error( "Cannot open file '"..tempFile..
+            "' containing OS command results!" )
+    end
+
+    for line in io.lines() do
+        if line:match( "%w" ) then
+            resultHandler = resultHandler( line )
+
+            if not resultHandler then break end
+        end
+    end
+
+    io.input():close()
+    os.remove( tempFile )
+end
+
+function GetJsonFromFile (file)
+  
+end
+
+function GetReadBites(name)
+  local bitesRead = 0
+  local shellComand = "cat /tmp/openvpn-status_"..name..".log | sed -n 's/TCP\\/UDP read bytes,\\(\\S*\\).*$/\\1/p'"
+  local handler = function (line)
+    local number = tonumber(line)
+    if number == nil then
+      number = 0
+    end
+    if number ~= 0 then
+      bitesRead = number
+    end
+  end
+  RunShellCommand(shellComand, handler)
+  return bitesRead
+end
+
 function Vpn.addVpn (props)
   local form = props.form
   local c = Uci.cursor()
@@ -42,7 +87,12 @@ end
 function Vpn.getVpns(props)
   local vpns = GetConfUnamed("openvpn", "openvpn")
   for index, vpn in ipairs(vpns) do
-    vpns[index].status = vpn.enable == "1" and "Enabled" or "Disabled"
+    if vpn.type=="client" then
+      local isConnected = GetReadBites(vpn._name) > 0
+      vpns[index].status = vpn.enable == "1" and (isConnected and "connected" or "disconnected") or "disabled"
+    else 
+      vpns[index].status = vpn.enable == "1" and "enabled" or "disabled"
+    end
   end
   props.vpns = vpns
   return props

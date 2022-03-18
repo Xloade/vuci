@@ -5,7 +5,7 @@
         {{name}}_{{record.type}}
       </template>
       <template slot="status" slot-scope="text">
-        {{text == "Enabled" ? $t('table.status.enabled') : $t('table.status.disabled')}}
+        {{$t('table.status.'+text)}}
       </template>
       <template slot="operation" slot-scope="text, record, index">
         <div class="operations">
@@ -58,7 +58,8 @@ export default {
           dataIndex: 'operation',
           scopedSlots: { customRender: 'operation' }
         }
-      ]
+      ],
+      refresh: null
     }
   },
   methods: {
@@ -95,6 +96,10 @@ export default {
   },
   mounted () {
     this.getVPNs()
+    this.refresh = setInterval(this.getVPNs, 5000)
+  },
+  beforeDestroy () {
+    clearInterval(this.refresh)
   },
   components: {
     AddForm
