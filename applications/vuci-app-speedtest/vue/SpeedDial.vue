@@ -6,8 +6,8 @@
       :percent="currentSpeed" type="dashboard"
       :stroke-color="currentColor"
     >
-      <template #format="percent">
-        <h2>{{ percent.toFixed(2) }} Mbps</h2>
+      <template #format>
+        <h2>{{ currentSpeed.toFixed(2) }} Mbps</h2>
       </template>
     </a-progress>
 
