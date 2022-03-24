@@ -43,6 +43,9 @@ function Speedtest.GetServer(prop)
             end
         end
     end
+    if goodServer == nil then
+        error("No good server")
+    end
     prop.server = goodServer
     return prop
 end
@@ -56,7 +59,7 @@ function HelloServer(server)
     local c = Curl.easy{
         url = url,
         httpheader = headers,
-        timeout = 1
+        timeout = 2
     }
     pcall(c.perform,c,{writefunction=function(str)
         return ""
