@@ -1,35 +1,37 @@
 <template>
   <div>
-    <a-row class="server-info" type="flex" justify="center" align="middle">
+    <a-row class="server-info" type="flex" justify="center" align="middle" :gutter="[100, 0]">
       <a-col v-if="locationInfo">
-        <h2>Location: {{locationInfo.country}}</h2>
+        <div class="info">
+          <location-svg class="icon"/>
+          <h2>Location: {{locationInfo.country}}</h2>
+        </div>
       </a-col>
       <a-col>
-        <h2>Ping: {{ping.toFixed(2)}}ms</h2>
+        <div class="info">
+          <clock-svg class="icon"/>
+          <h2>Ping: {{ping.toFixed(2)}}ms</h2>
+        </div>
       </a-col>
     </a-row>
-    <a-row class="avg-speeds" type="flex" justify="space-around" align="middle">
-      <a-col :span="8">
-        <a-row type="flex" justify="space-between">
-          <a-col>
-            <div class="speeds">
-              <download-svg class="icon download"/>
-              <h2>
-                  Download: {{averageDown.toFixed(2)}}
-                <template v-if="!isNaN(averageDown)">Mbps</template>
-              </h2>
-            </div>
-          </a-col>
-          <a-col>
-            <div class="speeds">
-              <upload-svg class="icon upload"/>
-              <h2>
-                Upload: {{averageUp.toFixed(2)}}
-                <template v-if="!isNaN(averageDown)">Mbps</template>
-              </h2>
-            </div>
-          </a-col>
-        </a-row>
+    <a-row class="avg-speeds" type="flex" justify="center" align="middle" :gutter="[100, 0]">
+      <a-col>
+        <div class="speeds">
+          <download-svg class="icon download"/>
+          <h2>
+              Download: {{averageDown.toFixed(2)}}
+            <template v-if="!isNaN(averageDown)">Mbps</template>
+          </h2>
+        </div>
+      </a-col>
+      <a-col>
+        <div class="speeds">
+          <upload-svg class="icon upload"/>
+          <h2>
+            Upload: {{averageUp.toFixed(2)}}
+            <template v-if="!isNaN(averageDown)">Mbps</template>
+          </h2>
+        </div>
       </a-col>
     </a-row>
     <a-row type="flex" justify="space-around" align="middle">
@@ -68,6 +70,8 @@ import SpeedDial from './SpeedDial.vue'
 import ServerSelect from './ServerSelect.vue'
 import DownloadSvg from './DownloadSvg.vue'
 import UploadSvg from './UploadSvg.vue'
+import LocationSvg from './LocationSvg.vue'
+import ClockSvg from './ClocSvg.vue'
 export default {
   data () {
     return {
@@ -219,7 +223,9 @@ export default {
     SpeedDial,
     ServerSelect,
     DownloadSvg,
-    UploadSvg
+    UploadSvg,
+    ClockSvg,
+    LocationSvg
   }
 }
 </script>
@@ -234,11 +240,11 @@ export default {
   .select{
     margin: 12px 0px
   }
-  .speeds > *:last-child{
+  .speeds > *:last-child , .info > *:last-child {
     display: inline;
-    margin: 0px
+    margin-bottom: 0px;
   }
-  .speeds{
+  .speeds, .info{
     display: flex;
     align-items: center;
   }
