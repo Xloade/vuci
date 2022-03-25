@@ -1,26 +1,35 @@
 <template>
   <div>
     <a-row class="server-info" type="flex" justify="center" align="middle">
-      <!-- <a-col>
-        <h2>Server:
-          <span class="noServer" v-if="noServer">No server found</span>
-          <template v-else>{{server.Provider}}</template>
-        </h2>
-      </a-col> -->
+      <a-col v-if="locationInfo">
+        <h2>Location: {{locationInfo.country}}</h2>
+      </a-col>
       <a-col>
         <h2>Ping: {{ping.toFixed(2)}}ms</h2>
       </a-col>
     </a-row>
-    <a-row class="avg-speeds" type="flex" justify="center" align="middle">
-      <a-col>
-        <h2>Download: {{averageDown.toFixed(2)}}
-          <template v-if="!isNaN(averageDown)">Mbps</template>
-        </h2>
-      </a-col>
-      <a-col>
-        <h2>Upload: {{averageUp.toFixed(2)}}
-          <template v-if="!isNaN(averageDown)">Mbps</template>
-        </h2>
+    <a-row class="avg-speeds" type="flex" justify="space-around" align="middle">
+      <a-col :span="8">
+        <a-row type="flex" justify="space-between">
+          <a-col>
+            <div class="speeds">
+              <download-svg class="icon download"/>
+              <h2>
+                  Download: {{averageDown.toFixed(2)}}
+                <template v-if="!isNaN(averageDown)">Mbps</template>
+              </h2>
+            </div>
+          </a-col>
+          <a-col>
+            <div class="speeds">
+              <upload-svg class="icon upload"/>
+              <h2>
+                Upload: {{averageUp.toFixed(2)}}
+                <template v-if="!isNaN(averageDown)">Mbps</template>
+              </h2>
+            </div>
+          </a-col>
+        </a-row>
       </a-col>
     </a-row>
     <a-row type="flex" justify="space-around" align="middle">
@@ -28,22 +37,22 @@
         <speed-dial :DownResults="DownResults" :UpResults="UpResults" />
       </a-col>
     </a-row>
-    <a-row type="flex" justify="space-around" align="middle">
-      <a-col>
-        <a-form-model :model="form" ref="form" :label-col="{span:6}" :wrapper-col="{span:14}">
-          <a-form-model-item :label="$t('server')" prop="server" :rules="rules.required">
-            <a-select
-              show-search
-              placeholder="Select a person"
-              option-filter-prop="children"
-              style="width: 200px"
-              :filter-option="serverFilter"
-              :options="ServerSelectOptions"
-              v-model="form.server"
-            >
-            </a-select>
-          </a-form-model-item >
-        </a-form-model>
+    <a-row class="select" type="flex" justify="center" align="middle">
+      <a-col :span="2">
+        Test progress:
+      </a-col>
+      <a-col :span="6">
+        <a-progress class="test-progress" :percent="testStatus.percent" :status="testStatus.status">
+          <template #format>
+            {{testStatus.message}}
+          </template>
+        </a-progress>
+      </a-col>
+    </a-row>
+    <a-row class="select" type="flex" justify="space-around" align="middle">
+      <a-col :span="6">
+        <server-select :list="servers" :selected="server" @select="(e) => server = e"/>
+          <p style="color: red;" v-if="!server && showWarn">Please select server</p>
       </a-col>
     </a-row>
     <a-row type="flex" justify="space-around" align="middle">
@@ -56,25 +65,22 @@
 
 <script>
 import SpeedDial from './SpeedDial.vue'
+import ServerSelect from './ServerSelect.vue'
+import DownloadSvg from './DownloadSvg.vue'
+import UploadSvg from './UploadSvg.vue'
 export default {
   data () {
     return {
       servers: [],
-      form: {
-        server: null
-      },
+      server: null,
       locationInfo: '',
+      showWarn: false,
 
       ping: 0,
       DownResults: [],
       UpResults: [],
       testing: false,
-      noServer: false,
-      rules: {
-        required: [
-          { required: true, message: this.$t('invalid.required'), trigger: 'blur' }
-        ]
-      }
+      testFailed: false
     }
   },
   methods: {
@@ -84,36 +90,48 @@ export default {
       )
     },
     BtnStart () {
-      this.$refs.form.validate(valid => {
-        if (valid) {
-          this.Start()
-        }
-      })
+      if (this.server) {
+        this.Start()
+      } else {
+        this.showWarn = true
+      }
     },
     Start () {
-      this.server = {}
       this.ping = 0
       this.DownResults = []
       this.UpResults = []
       this.testing = true
-      this.noServer = false
-      this.$rpc.call('speedtest', 'GetPing', { host: this.selectedServer.Host })
+      this.testFailed = false
+
+      return this.$rpc.call('speedtest', 'HelloServer', { server: this.server.Host })
+        .then(() => { return this.HandleHello })
+        .then(() => { return this.$rpc.call('speedtest', 'GetPing', { host: this.server.Host }) })
         .then(this.HandleGetPing)
         .then(async () => {
           await [...Array(3)].reduce((p, _, i) => {
-            return p.then(() => { return this.$rpc.call('speedtest', 'Download', { host: this.selectedServer.Host }) })
+            return p.then(() => { return this.$rpc.call('speedtest', 'Download', { host: this.server.Host }) })
               .then(this.HandleTestDown)
           }
           , Promise.resolve())
         })
         .then(async () => {
           await [...Array(3)].reduce((p, _, i) => {
-            return p.then(() => { return this.$rpc.call('speedtest', 'Upload', { host: this.selectedServer.Host }) })
+            return p.then(() => { return this.$rpc.call('speedtest', 'Upload', { host: this.server.Host }) })
               .then(this.HandleTestUp)
           }
           , Promise.resolve())
         })
         .then(() => { this.testing = false })
+        .catch(this.HandleTestFailed)
+    },
+    HandleHello (result) {
+      return new Promise((resolve, reject) => {
+        if (result === 200) {
+          resolve()
+        } else {
+          reject(new Error('not 200'))
+        }
+      })
     },
     HandleGetPing (result) {
       this.ping = result.result
@@ -124,8 +142,9 @@ export default {
     HandleTestUp (result) {
       this.UpResults.push(result.result)
     },
-    HandleNoServer (result) {
-      this.noServer = true
+    HandleTestFailed (result) {
+      console.log(result)
+      this.testFailed = true
       this.testing = false
     },
     GetServers () {
@@ -148,7 +167,7 @@ export default {
           })
             .then((result) => {
               if (result.response === 200) {
-                this.form.server = server.ID
+                this.server = server
                 throw new Error('Done')
               }
             })
@@ -175,23 +194,32 @@ export default {
       const sum = this.UpResults.reduce((curr, sum) => sum + curr, 0)
       return sum / this.UpResults.length
     },
-    ServerSelectOptions () {
-      return this.servers.map((value) => {
-        return {
-          label: value.Provider,
-          value: value.ID
+    testStatus () {
+      if (this.testFailed) {
+        return { message: 'failed', percent: 100, status: 'exception' }
+      } else if (this.testing) {
+        if (!this.DownResults.length) {
+          return { message: 'ping', percent: 30, status: 'active' }
+        } else if (!this.UpResults.length) {
+          return { message: 'download', percent: 60, status: 'active' }
+        } else {
+          return { message: 'upload', percent: 90, status: 'active' }
         }
-      })
-    },
-    selectedServer () {
-      return this.servers.find((element) => element.ID === this.form.server)
+      } else if (this.ping) {
+        return { message: 'finished', percent: 100, status: 'success' }
+      } else {
+        return { message: 'not started', percent: 0, status: 'normal' }
+      }
     }
   },
   created () {
     this.GetServers()
   },
   components: {
-    SpeedDial
+    SpeedDial,
+    ServerSelect,
+    DownloadSvg,
+    UploadSvg
   }
 }
 </script>
@@ -202,5 +230,24 @@ export default {
   }
   .noServer{
     color: red;
+  }
+  .select{
+    margin: 12px 0px
+  }
+  .speeds > *:last-child{
+    display: inline;
+    margin: 0px
+  }
+  .speeds{
+    display: flex;
+    align-items: center;
+  }
+</style>
+<style>
+  svg.icon.download{
+    fill:blue
+  }
+  svg.icon.upload{
+    fill:green
   }
 </style>

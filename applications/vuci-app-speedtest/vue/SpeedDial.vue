@@ -1,5 +1,13 @@
 <template>
   <div>
+    <p
+      class="speed-num"
+      v-for="(value, index) in Array(11)"
+      :key="index"
+      :style="{top: `${circle(40, 320, index, 11, 265, 165, 160).y}px`, left: `${circle(40, 320, index, 11, 265, 165, 160).x}px`}"
+    >
+      {{index*10}}
+    </p>
     <a-progress
       stroke-linecap="square"
       :width="350"
@@ -29,6 +37,16 @@ export default {
       }
     }
   },
+  methods: {
+    circle (startDeg, finishDeg, index, listLenght, circleDiameter, offsetX, offseY) {
+      const circleLenght = finishDeg - startDeg
+      const currPos = 360 - (circleLenght / (listLenght - 1) * index + startDeg)
+      const currPosRad = currPos * (Math.PI / 180)
+      const x = (Math.sin(currPosRad) * circleDiameter / 2) + offsetX
+      const y = (Math.cos(currPosRad) * circleDiameter / 2) + offseY
+      return { x, y }
+    }
+  },
   computed: {
     currentColor () {
       return this.UpResults.length === 0 ? this.gradiantDown : this.gradiantUp
@@ -47,5 +65,7 @@ export default {
 </script>
 
 <style scoped>
-
+  .speed-num{
+    position: absolute;
+  }
 </style>

@@ -136,13 +136,12 @@ function Speedtest.Download(props)
 end
 
 function Speedtest.Upload(props)
+    local bytesLeft = 25000000
     local headers = {
         "User-Agent: OpenWrt",
         "Content-type: application/octet-stream",
-        "Content-Length: 25000000"
+        "Content-Length: "..bytesLeft
     }
-
-    os.execute("dd if=/dev/urandom of=/tmp/random bs=1MB count=25")
 
     local url = props.host.."/upload"
 
@@ -153,10 +152,16 @@ function Speedtest.Upload(props)
         post = true,
     }
 
-    local datafilename = "/tmp/random"
+    local datafilename = "/dev/zero"
     local fhandle = assert(io.open(datafilename, "rb"))
+    local bytesToRead = 10000
     c:perform({readfunction=function(n)
-        return fhandle:read(10000)
+        if bytesLeft > 0 then
+            bytesLeft = bytesLeft - bytesToRead
+            return fhandle:read(bytesToRead)
+        else
+            return nil
+        end
     end})
     props.result = c:getinfo(Curl.INFO_SPEED_UPLOAD)/1000000*8
     c:close()
