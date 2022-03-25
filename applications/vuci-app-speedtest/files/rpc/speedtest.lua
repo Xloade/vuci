@@ -104,9 +104,7 @@ function Speedtest.GetPing(props)
     }
 
     c:perform({
-        writefunction=function(str)
-            return ""
-        end 
+        writefunction=function() end 
     })
     props.result = c:getinfo(Curl.INFO_CONNECT_TIME)*1000
     c:close()
@@ -126,9 +124,7 @@ function Speedtest.Download(props)
     }
 
     c:perform({
-        writefunction=function(str)
-            return ""
-        end 
+        writefunction=function() end 
     })
     props.result = c:getinfo(Curl.INFO_SPEED_DOWNLOAD)/1000000*8
     c:close()
