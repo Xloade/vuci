@@ -1,7 +1,6 @@
 Curl = require 'cURL'
 Json = require 'vuci.json'
 
-Servers = nil
 Speedtest = {}
 
 function GetJsonFromFile(file)
@@ -11,14 +10,23 @@ function GetJsonFromFile(file)
     return json
 end
 
-function GetServers()
-    if Servers == nil then
-        Servers = GetJsonFromFile("/etc/vuci-app-speedtest/servers.json")
+function FileExists(name)
+    local f = io.open( name,"r")
+    if f ~= nil then
+        f:close()
     end
-    return Servers
+    return f ~= nil
 end
 
-function Speedtest.GetServer(prop)
+function Speedtest.GetServers(prop)
+    if not FileExists("/tmp/vuci-app-speedtest-servers.json") then
+        os.execute("curl -L -o /tmp/vuci-app-speedtest-servers.json https://drive.google.com/uc?id=16fh7RQLe1kQ617gCJwhKcwH9_L8naoFw")
+    end
+    prop.servers = GetJsonFromFile("/tmp/vuci-app-speedtest-servers.json")
+    return prop
+end
+
+function Speedtest.GetLocationInfo(prop)
     local url = "http://ip-api.com/json/"
     local c = Curl.easy{
         url = url,
@@ -29,44 +37,58 @@ function Speedtest.GetServer(prop)
         jsonTxt = jsonTxt..n
     end})
     c:close()
-    local results = Json.decode(jsonTxt)
-    local country = results["country"]
-    
-    local servers = GetServers()
-    local goodServer = nil
-    for index, value in ipairs(servers["Servers"]) do
-        if(value["Country"] == country) then
-            local result = HelloServer(value["Host"])
-            if(result == 200) then
-                goodServer = value
-                break
-            end
-        end
-    end
-    if goodServer == nil then
-        error("No good server")
-    end
-    prop.server = goodServer
+    prop.info = Json.decode(jsonTxt)
     return prop
 end
 
-function HelloServer(server)
+-- function Speedtest.GetServer(prop)
+--     local url = "http://ip-api.com/json/"
+--     local c = Curl.easy{
+--         url = url,
+--         timeout = 5
+--     }
+--     local jsonTxt = ""
+--     c:perform({writefunction=function(n)
+--         jsonTxt = jsonTxt..n
+--     end})
+--     c:close()
+--     local results = Json.decode(jsonTxt)
+--     local country = results["country"]
+    
+--     local servers = GetServers()
+--     local goodServer = nil
+--     for index, value in ipairs(servers["settings"]["servers"]["server"]) do
+--         if(value["@country"] == country) then
+--             value["@url"] = value["@url"]:match("(.+)/upload.php")
+--             print(value["@url"])
+--             local result = HelloServer(value["@url"])
+--             if(result == 200) then
+--                 goodServer = value
+--                 break
+--             end
+--         end
+--     end
+--     if goodServer == nil then
+--         error("No good server")
+--     end
+--     prop.server = goodServer
+--     return prop
+-- end
+
+function Speedtest.HelloServer(prop)
     local headers = {
         "User-Agent: OpenWrt",
     }
-
-    local url = server.."/hello"
+    local url = prop.server.."/hello"
     local c = Curl.easy{
         url = url,
         httpheader = headers,
-        timeout = 2
+        timeout_ms = 1000,
     }
-    pcall(c.perform,c,{writefunction=function(str)
-        return ""
-    end })
-    local response = c:getinfo(Curl.INFO_RESPONSE_CODE)
+    pcall(c.perform,c,{writefunction=function(str) end })
+    prop.response = c:getinfo(Curl.INFO_RESPONSE_CODE)
     c:close()
-    return response
+    return prop
 end
 
 function Speedtest.GetPing(props)
@@ -140,5 +162,4 @@ function Speedtest.Upload(props)
     c:close()
     return props
 end
-
 return Speedtest
