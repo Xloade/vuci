@@ -30,7 +30,7 @@ export default {
             info: v.msg,
             id: i
           }
-        }).slice(-5)
+        }).slice(-5).reverse()
       })
     }
   },

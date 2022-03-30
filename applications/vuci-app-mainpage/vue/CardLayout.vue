@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-card size="small" style="width: 100%; height: 410px">
+    <a-card class="card" size="small">
       <template #title>
         <a-row type="flex" justify="space-between">
           <a-col :span="6">
@@ -11,10 +11,12 @@
           </a-col>
         </a-row>
       </template>
-      <a-row class="info" v-for="infoItem in combinedInfo" :key="infoItem.key && infoItem.title">
-        <h3>{{infoItem.title}}</h3>
-        <component :is="infoItem.type || 'normalInfo'" :info="infoItem.info"/>
-      </a-row>
+      <div class="card-body">
+        <a-row class="info" v-for="infoItem in combinedInfo" :key="infoItem.key && infoItem.title">
+          <h3>{{infoItem.title}}</h3>
+          <component :is="infoItem.type || 'normalInfo'" :info="infoItem.info"/>
+        </a-row>
+      </div>
     </a-card>
   </div>
 </template>
@@ -34,5 +36,14 @@ export default {
 <style scoped>
   .info:not(:last-child){
     border-bottom: 1px solid rgb(197, 197, 197);
+  }
+  .card{
+    width: 100%;
+    height: 410px;
+  }
+  .card-body{
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 365px;
   }
 </style>

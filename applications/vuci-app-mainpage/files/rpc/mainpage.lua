@@ -12,15 +12,17 @@ function GetConfUnamed(conf, type)
 end
 
 function Mainpage.Get(props)
-    props.cards = GetConfUnamed("vuci-app-mainpage", "cards")
+    props.cards = GetConfUnamed("vuci-app-mainpage", "card")
     return props
 end
 
 function Mainpage.Save(props)
     local c = Uci.cursor()
     for index, value in ipairs(props.cards) do
-        
+        c:set("vuci-app-mainpage", value.name, "order", value.info.order)
+        c:set("vuci-app-mainpage", value.name, "show", value.info.show and 1 or 0)
     end
+    c:commit("vuci-app-mainpage")
     return props
 end
 
