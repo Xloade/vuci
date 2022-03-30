@@ -11,16 +11,16 @@ import CardLayout from './CardLayout.vue'
 export default {
   data () {
     return {
-      title: 'LAN',
-      name: 'lan',
+      title: 'WAN',
+      name: 'wan',
       info: {
         type: {
           title: 'Type',
           info: ''
         },
-        ip: {
-          title: 'IP adress',
-          info: ''
+        failover: {
+          title: 'Failover',
+          info: 'REIKIA PAZIURETI !!!'
         }
       }
     }
@@ -32,9 +32,8 @@ export default {
     update () {
       this.$network.load()
         .then(() => {
-          const network = this.$network.getInterface('lan')
+          const network = this.$network.getInterface('wan')
           this.info.type.info = network.getDevice().name
-          this.info.ip.info = network.getIPv4Addrs()[0]
         })
     }
   },

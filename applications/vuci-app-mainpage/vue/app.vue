@@ -29,6 +29,7 @@
 import SystemCard from './SystemCard.vue'
 import LoggingCard from './LoggingCard.vue'
 import LanCard from './LANCard.vue'
+import WanCard from './WANCard.vue'
 import draggable from 'vuedraggable'
 export default {
   data () {
@@ -80,6 +81,7 @@ export default {
     SystemCard,
     LoggingCard,
     LanCard,
+    WanCard,
     draggable
   }
 }

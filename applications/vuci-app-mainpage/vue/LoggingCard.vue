@@ -19,7 +19,7 @@ export default {
     }
   },
   timers: {
-    update: { time: 2000, autostart: true, immediate: true, repeat: true }
+    update: { time: 5000, autostart: true, immediate: true, repeat: true }
   },
   methods: {
     update () {
