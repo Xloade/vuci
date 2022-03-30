@@ -17,7 +17,7 @@
     </a-button>
     <a-row :gutter="[12,12]" type="flex">
       <draggable @change="save" v-model="cards" @start="drag=true" @end="drag=false" :animation="200" ghost-class="ghost-card">
-        <a-col class="card" :span="8" v-for="card in cards" :key="card.name">
+        <a-col class="outer-card" :span="8" v-for="card in cards" :key="card.name">
           <component v-if="card.info.show" :is="card.name"/>
         </a-col>
       </draggable>
@@ -30,6 +30,7 @@ import SystemCard from './SystemCard.vue'
 import LoggingCard from './LoggingCard.vue'
 import LanCard from './LANCard.vue'
 import WanCard from './WANCard.vue'
+import AccessCard from './AccessCard.vue'
 import draggable from 'vuedraggable'
 export default {
   data () {
@@ -82,14 +83,16 @@ export default {
     LoggingCard,
     LanCard,
     WanCard,
+    AccessCard,
     draggable
   }
 }
 </script>
 
 <style>
-.card{
-  border: 1px solid #4299e100;
+.outer-card{
+  border: 1px solid #c2c2c200;
+  /* border-radius: 5px; */
 }
 .ghost-card {
   opacity: 0.5;

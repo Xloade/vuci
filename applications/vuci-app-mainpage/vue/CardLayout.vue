@@ -35,7 +35,7 @@ export default {
 
 <style scoped>
   .info:not(:last-child){
-    border-bottom: 1px solid rgb(197, 197, 197);
+    border-bottom: 1px solid rgb(192, 192, 192);
   }
   .card{
     width: 100%;
