@@ -1,0 +1,7 @@
+{
+    "status/mainpage": {
+        "title": "Mainpage",
+        "view": "vuci-app-mainpage",
+        "index": 1354
+    }
+}
