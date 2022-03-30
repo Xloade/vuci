@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-modal v-model="visible" title="Title" @ok="handleOk" @cancel="handleCancel" centered>
+    <a-modal v-model="visible" title="Show/Hide Information" @ok="handleOk" @cancel="handleCancel" centered>
       <template slot="footer">
         <a-button key="submit" @click="handleOk">
           Done
@@ -12,7 +12,7 @@
         </a-form-model-item>
       </a-form-model>
     </a-modal>
-    <a-button type="primary" @click="showModal">
+    <a-button class="openModalBtn" type="primary" @click="showModal">
       Show/Hide Information
     </a-button>
     <a-row :gutter="[12,12]" type="flex">
@@ -28,6 +28,7 @@
 <script>
 import SystemCard from './SystemCard.vue'
 import LoggingCard from './LoggingCard.vue'
+import LanCard from './LANCard.vue'
 import draggable from 'vuedraggable'
 export default {
   data () {
@@ -78,6 +79,7 @@ export default {
   components: {
     SystemCard,
     LoggingCard,
+    LanCard,
     draggable
   }
 }
@@ -91,5 +93,8 @@ export default {
   opacity: 0.5;
   background: #F7FAFC;
   border: 1px solid #4299e1;
+}
+.openModalBtn{
+  margin:12px
 }
 </style>

@@ -2,7 +2,7 @@
   <div>
     <a-card class="card" size="small">
       <template #title>
-        <a-row type="flex" justify="space-between">
+        <a-row class="title" type="flex" justify="space-between">
           <a-col :span="6">
             <div class="title">{{title}}</div>
           </a-col>
@@ -44,6 +44,9 @@ export default {
   .card-body{
     overflow-y: auto;
     overflow-x: hidden;
-    height: 365px;
+    height: 360px;
+  }
+  .title{
+    height: 24px;
   }
 </style>
