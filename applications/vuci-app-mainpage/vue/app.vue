@@ -7,9 +7,11 @@
         </a-button>
       </template>
       <a-form-model :label-col="{ span: 6 }" :wrapper-col="{ span: 14 }">
-        <a-form-model-item v-for="card in cards" :key="card.name" :label="$t(card.name)">
-          <a-switch  v-model="card.info.show" @change="syncFiltered"/>
-        </a-form-model-item>
+        <div v-for="card in cards" :key="card.name" >
+          <a-form-model-item :label="$t(card.name)" v-if="card.name !== 'wan6Card'">
+            <a-switch  v-model="card.info.show" @change="syncFiltered"/>
+          </a-form-model-item>
+        </div>
       </a-form-model>
     </a-modal>
     <a-button class="openModalBtn" type="primary" @click="showModal">
@@ -44,6 +46,7 @@ export default {
   },
   methods: {
     syncFiltered () {
+      this.cards.find(e => e.name === 'wan6Card').info.show = this.cards.find(e => e.name === 'wanCard').info.show
       this.filteredCards = this.filteredCards.map((e, i) => {
         e.info.order = i
       })
