@@ -70,4 +70,56 @@ function Mainpage.logs(props)
     return props
 end
 
+function Mainpage.Access(props)
+    local lan = {}
+    local wan = {}
+
+    local wanrules = GetConfUnamed("firewall", "rule")
+
+    for index, value in ipairs(wanrules) do
+        if value.name == "Enable_SSH_WAN" then
+            wan.ssh = value.enabled == '1'
+        elseif value.name == "Enable_HTTP_WAN" then
+            wan.http = value.enabled == '1'
+        elseif value.name == "Enable_CLI_WAN" then
+            wan.cli = value.enabled == '1'
+        end
+    end
+
+    local c = Uci.cursor()
+
+    lan.cli = c:get('cli', 'status', 'enable') == '1'
+    lan.ssh = GetConfUnamed("dropbear", "dropbear")[1].enable == '1'
+    lan.http = c:get('vuci-httpd', 'main', 'enabled') == '1'
+
+
+    local lanAnswer = ''
+    if lan.ssh then lanAnswer = lanAnswer.."ssh, " end
+    if lan.http then lanAnswer = lanAnswer.."http, " end
+    if lan.cli then lanAnswer = lanAnswer.."cli, " end
+
+    local wanAnswer = ''
+
+    if wan.ssh then wanAnswer = wanAnswer.."ssh, " end
+    if wan.http then wanAnswer = wanAnswer.."http, " end
+    if wan.cli then wanAnswer = wanAnswer.."cli, " end
+
+    if #lanAnswer > 1 then
+        lanAnswer = lanAnswer:sub(1, -3)
+    else
+        lanAnswer = '-'
+    end
+
+    if #wanAnswer > 1 then
+        wanAnswer = wanAnswer:sub(1, -3)
+    else
+        wanAnswer = '-'
+    end
+
+    props.lan = lanAnswer
+    props.wan = wanAnswer
+
+    return props
+end
+
 return Mainpage
