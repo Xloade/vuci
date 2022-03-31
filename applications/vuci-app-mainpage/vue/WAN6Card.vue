@@ -16,6 +16,10 @@ export default {
         type: {
           title: 'Type',
           info: ''
+        },
+        ip: {
+          title: 'IP adress',
+          info: ''
         }
       }
     }
@@ -28,7 +32,8 @@ export default {
       this.$network.load()
         .then(() => {
           const network = this.$network.getInterface('wan6')
-          this.info.type.info = network.getDevice() === undefined ? null : network.getDevice().name
+          this.info.type.info = network.getDevice() ? network.getDevice().name : '-'
+          this.info.ip.info = network.getIPv4Addrs()[0] ? network.getIPv4Addrs()[0] : '-'
         })
     }
   },
