@@ -1,3 +1,10 @@
 {
-    "Mainpage": "Main page"
+    "Mainpage": "Main page",
+    "wanCard": "WAN",
+    "lanCard": "LAN",
+    "wan6Card": "WAN6",
+    "networkLogCard": "Network logs",
+    "systemLogCard": "System logs",
+    "accessCard": "Access control",
+    "systemCard": "System"
 }

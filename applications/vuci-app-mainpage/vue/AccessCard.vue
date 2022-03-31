@@ -1,6 +1,6 @@
 <template>
   <div>
-    <card-layout :title="title" :combinedInfo="combinedInfo">
+    <card-layout :title="title" :info="info">
     </card-layout>
   </div>
 </template>
@@ -12,7 +12,6 @@ export default {
   data () {
     return {
       title: 'Access control',
-      name: 'accessControl',
       info: {
         lan: {
           title: 'LAN',

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <card-layout :title="title" :combinedInfo="combinedInfo">
+    <card-layout :title="title" :info="info">
       <template #title-additional>
         <memory-usage-info :info="cpuPercentage" />
       </template>
@@ -16,7 +16,6 @@ export default {
   data () {
     return {
       title: 'System',
-      name: 'system',
       cpuPercentage: [{
         title: 'CPU usage',
         info: 0
@@ -39,8 +38,8 @@ export default {
           title: 'Memory usage',
           type: 'memory-usage-info',
           info: {
-            disk: {
-              title: 'DISK:',
+            ram: {
+              title: 'RAM:',
               info: 0
             },
             flash: {
@@ -64,7 +63,7 @@ export default {
         this.info.version.info = release.revision
         this.info.uptime.info = '%t'.format(uptime)
 
-        this.info.memoryUsage.info.disk.info = Math.floor(((memory.total - memory.free) / memory.total) * 100)
+        this.info.memoryUsage.info.ram.info = Math.floor(((memory.total - memory.free) / memory.total) * 100)
       })
 
       this.$system.getDiskInfo().then(({ root }) => {

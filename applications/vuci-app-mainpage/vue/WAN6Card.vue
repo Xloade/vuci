@@ -11,7 +11,7 @@ import CardLayout from './CardLayout.vue'
 export default {
   data () {
     return {
-      title: 'WAN',
+      title: 'WAN6',
       info: {
         type: {
           title: 'Type',
@@ -27,8 +27,8 @@ export default {
     update () {
       this.$network.load()
         .then(() => {
-          const network = this.$network.getInterface('wan')
-          this.info.type.info = network.getDevice().name
+          const network = this.$network.getInterface('wan6')
+          this.info.type.info = network.getDevice() === undefined ? null : network.getDevice().name
         })
     }
   },

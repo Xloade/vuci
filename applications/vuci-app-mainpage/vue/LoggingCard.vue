@@ -19,18 +19,18 @@ export default {
     }
   },
   timers: {
-    update: { time: 5000, autostart: true, immediate: true, repeat: true }
+    update: { time: 20000, autostart: true, immediate: true, repeat: true }
   },
   methods: {
     update () {
-      this.$rpc.call('system', 'syslog').then(({ log }) => {
+      this.$rpc.call('mainpage', 'logs', { msg: { type: 'SYSTEM', short: true } }).then(({ log }) => {
         this.extraInfo = log.map((v, i) => {
           return {
             title: v.datetime,
-            info: v.msg,
+            info: v.event,
             id: i
           }
-        }).slice(-5).reverse()
+        })
       })
     }
   },

@@ -11,13 +11,10 @@ import CardLayout from './CardLayout.vue'
 export default {
   data () {
     return {
-      title: 'WAN',
-      info: {
-        type: {
-          title: 'Type',
-          info: ''
-        }
-      }
+      title: 'Recent network events',
+      info: [
+
+      ]
     }
   },
   timers: {
@@ -25,11 +22,15 @@ export default {
   },
   methods: {
     update () {
-      this.$network.load()
-        .then(() => {
-          const network = this.$network.getInterface('wan')
-          this.info.type.info = network.getDevice().name
+      this.$rpc.call('mainpage', 'logs', { msg: { type: 'NETWORK', short: true } }).then(({ log }) => {
+        this.info = log.map((v, i) => {
+          return {
+            title: v.datetime,
+            info: v.event,
+            id: i
+          }
         })
+      })
     }
   },
   mixins: [CardMixin],

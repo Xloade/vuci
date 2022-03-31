@@ -1,24 +1,24 @@
 <template>
   <div>
-    <a-modal v-model="visible" title="Show/Hide Information" @ok="handleOk" @cancel="handleCancel" centered>
+    <a-modal v-model="visible" title="Show/Hide Cards" @ok="handleOk" @cancel="handleCancel" centered>
       <template slot="footer">
         <a-button key="submit" @click="handleOk">
           Done
         </a-button>
       </template>
       <a-form-model :label-col="{ span: 6 }" :wrapper-col="{ span: 14 }">
-        <a-form-model-item v-for="card in cards" :key="card.name" :label="card.name">
-          <a-switch  v-model="card.info.show"/>
+        <a-form-model-item v-for="card in cards" :key="card.name" :label="$t(card.name)">
+          <a-switch  v-model="card.info.show" @change="syncFiltered"/>
         </a-form-model-item>
       </a-form-model>
     </a-modal>
     <a-button class="openModalBtn" type="primary" @click="showModal">
-      Show/Hide Information
+      Show/Hide Cards
     </a-button>
     <a-row :gutter="[12,12]" type="flex">
-      <draggable @change="save" v-model="cards" @start="drag=true" @end="drag=false" :animation="200" ghost-class="ghost-card">
-        <a-col class="outer-card" :span="8" v-for="card in cards" :key="card.name">
-          <component v-if="card.info.show" :is="card.name"/>
+      <draggable class="drag" @change="saveOrder" :list="filteredCards" @start="drag=true" @end="drag=false" :animation="200" ghost-class="ghost-card">
+        <a-col class="outer-card" :span="6" v-for="card in filteredCards" :key="card.name">
+          <component :is="card.name"/>
         </a-col>
       </draggable>
     </a-row>
@@ -27,25 +27,37 @@
 
 <script>
 import SystemCard from './SystemCard.vue'
-import LoggingCard from './LoggingCard.vue'
+import SystemLogCard from './SystemLogCard.vue'
+import NetworkLogCard from './NetworkLogCard.vue'
 import LanCard from './LANCard.vue'
 import WanCard from './WANCard.vue'
+import Wan6Card from './WAN6Card.vue'
 import AccessCard from './AccessCard.vue'
 import draggable from 'vuedraggable'
 export default {
   data () {
     return {
       cards: [],
+      filteredCards: [],
       visible: false
     }
   },
   methods: {
-    save () {
-      this.cards = this.cards.map((e, i) => {
+    syncFiltered () {
+      this.filteredCards = this.filteredCards.map((e, i) => {
+        e.info.order = i
+      })
+      this.filteredCards = this.cards.filter((e) => e.info.show).sort((a, b) => { return a.info.order - b.info.order })
+    },
+    saveShow () {
+      this.$rpc.call('mainpage', 'SaveShow', { cards: this.cards })
+    },
+    saveOrder () {
+      this.filteredCards = this.filteredCards.map((e, i) => {
         e.info.order = i
         return e
       })
-      this.$rpc.call('mainpage', 'Save', { cards: this.cards })
+      this.$rpc.call('mainpage', 'SaveOrder', { cards: this.filteredCards })
     },
     get () {
       this.$rpc.call('mainpage', 'Get', {})
@@ -62,17 +74,18 @@ export default {
             .sort((a, b) => {
               return a.info.order - b.info.order
             })
+          this.syncFiltered()
         })
     },
     showModal () {
       this.visible = true
     },
     handleOk (e) {
-      this.save()
+      this.saveShow()
       this.visible = false
     },
     handleCancel (e) {
-      this.save()
+      this.saveShow()
     }
   },
   created () {
@@ -80,9 +93,11 @@ export default {
   },
   components: {
     SystemCard,
-    LoggingCard,
+    SystemLogCard,
+    NetworkLogCard,
     LanCard,
     WanCard,
+    Wan6Card,
     AccessCard,
     draggable
   }
@@ -92,7 +107,6 @@ export default {
 <style>
 .outer-card{
   border: 1px solid #c2c2c200;
-  /* border-radius: 5px; */
 }
 .ghost-card {
   opacity: 0.5;
@@ -101,5 +115,8 @@ export default {
 }
 .openModalBtn{
   margin:12px
+}
+.drag{
+  width: 100%;
 }
 </style>

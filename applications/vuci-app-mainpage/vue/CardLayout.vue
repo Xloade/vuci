@@ -12,9 +12,11 @@
         </a-row>
       </template>
       <div class="card-body">
-        <a-row class="info" v-for="infoItem in combinedInfo" :key="infoItem.key && infoItem.title">
-          <h3>{{infoItem.title}}</h3>
-          <component :is="infoItem.type || 'normalInfo'" :info="infoItem.info"/>
+        <a-row class="info" v-for="infoItem in info" :key="infoItem.key && infoItem.title">
+          <template v-if="infoItem.info !== null">
+            <h3>{{infoItem.title}}</h3>
+            <component :is="infoItem.type || 'normalInfo'" :info="infoItem.info"/>
+          </template>
         </a-row>
       </div>
     </a-card>
@@ -25,7 +27,7 @@
 import MemoryUsageInfo from './MemoryUsageInfo.vue'
 import NormalInfo from './NormalInfo.vue'
 export default {
-  props: ['title', 'combinedInfo'],
+  props: ['title', 'info'],
   components: {
     MemoryUsageInfo,
     NormalInfo
