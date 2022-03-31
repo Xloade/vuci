@@ -90,9 +90,13 @@ export default {
 
       if (this.info.lan.info.length > 1) {
         this.info.lan.info = this.info.lan.info.slice(0, -2)
+      } else {
+        this.info.lan.info = '-'
       }
       if (this.info.wan.info.length > 1) {
         this.info.wan.info = this.info.wan.info.slice(0, -2)
+      } else {
+        this.info.wan.info = '-'
       }
     }
   },
